@@ -8,9 +8,9 @@ import { setupApp } from '~/logic/common-setup'
 (() => {
   console.info('[vitesse-webext] Hello world from content script')
 
-  // communication example: send previous tab title from background page
-  onMessage('tab-prev', ({ data }) => {
-    console.log(`[vitesse-webext] Navigate from page "${data.title}"`)
+  onMessage('response-rules-updated', ({ data }) => {
+    // 通过 window.postMessage 广播给 req-proxy.ts 处理
+    window.postMessage({ __type: 'RR_RULES_UPDATE', rules: data }, '*')
   })
 
   // mount component to context window

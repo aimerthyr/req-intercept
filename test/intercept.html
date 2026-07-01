@@ -1,0 +1,375 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Req Intercept 功能测试</title>
+  <style>
+    :root {
+      --bg: #0f1419;
+      --surface: #1a2332;
+      --border: #2d3a4f;
+      --text: #e7ecf3;
+      --muted: #8b9cb3;
+      --accent: #3b82f6;
+      --pass: #22c55e;
+      --fail: #ef4444;
+      --warn: #f59e0b;
+    }
+
+    * { box-sizing: border-box; }
+
+    body {
+      margin: 0;
+      font-family: ui-sans-serif, system-ui, -apple-system, sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      line-height: 1.5;
+      padding: 24px;
+    }
+
+    h1 { font-size: 1.5rem; margin: 0 0 8px; }
+    .subtitle { color: var(--muted); margin-bottom: 24px; font-size: 0.9rem; }
+
+    section {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 20px;
+      margin-bottom: 20px;
+    }
+
+    section h2 {
+      font-size: 1rem;
+      margin: 0 0 12px;
+      color: var(--accent);
+    }
+
+    .steps {
+      margin: 0;
+      padding-left: 1.25rem;
+      color: var(--muted);
+      font-size: 0.875rem;
+    }
+
+    .steps li { margin-bottom: 6px; }
+
+    pre {
+      background: #0a0e14;
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      padding: 12px;
+      overflow-x: auto;
+      font-size: 0.75rem;
+      margin: 12px 0;
+    }
+
+    .toolbar {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px;
+      margin-bottom: 16px;
+    }
+
+    button {
+      cursor: pointer;
+      border: 1px solid var(--border);
+      background: var(--surface);
+      color: var(--text);
+      padding: 8px 16px;
+      border-radius: 8px;
+      font-size: 0.875rem;
+    }
+
+    button:hover { border-color: var(--accent); }
+    button.primary { background: var(--accent); border-color: var(--accent); color: #fff; }
+
+    .grid {
+      display: grid;
+      gap: 12px;
+    }
+
+    @media (min-width: 720px) {
+      .grid { grid-template-columns: repeat(2, 1fr); }
+    }
+
+    .card {
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      padding: 14px;
+      background: #121a26;
+    }
+
+    .card-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 8px;
+      margin-bottom: 8px;
+    }
+
+    .card-title { font-weight: 600; font-size: 0.9rem; }
+
+    .badge {
+      font-size: 0.7rem;
+      padding: 2px 8px;
+      border-radius: 999px;
+      background: var(--border);
+      color: var(--muted);
+      white-space: nowrap;
+    }
+
+    .badge.dnr { background: #1e3a5f; color: #93c5fd; }
+    .badge.proxy { background: #3f2e1e; color: #fcd34d; }
+
+    .meta {
+      font-size: 0.75rem;
+      color: var(--muted);
+      margin-bottom: 10px;
+    }
+
+    .expect {
+      font-size: 0.8rem;
+      color: var(--muted);
+      margin-bottom: 10px;
+    }
+
+    .result {
+      font-size: 0.8rem;
+      padding: 10px;
+      border-radius: 6px;
+      background: #0a0e14;
+      border: 1px solid var(--border);
+      min-height: 48px;
+      word-break: break-all;
+      font-family: ui-monospace, monospace;
+    }
+
+    .result.pending { color: var(--muted); }
+    .result.pass { border-color: var(--pass); color: #86efac; }
+    .result.fail { border-color: var(--fail); color: #fca5a5; }
+    .result.warn { border-color: var(--warn); color: #fde68a; }
+
+    .summary {
+      font-size: 0.875rem;
+      padding: 10px 14px;
+      border-radius: 8px;
+      background: #0a0e14;
+      border: 1px solid var(--border);
+    }
+  </style>
+</head>
+<body>
+  <h1>Req Intercept 功能测试</h1>
+  <p class="subtitle">全部使用 jsonplaceholder.typicode.com 真实接口（支持 CORS，无 404）。请先加载扩展并写入规则。</p>
+
+  <section>
+    <h2>0. 准备</h2>
+    <ol class="steps">
+      <li>在 <code>chrome://extensions</code> 加载本扩展并刷新</li>
+      <li>打开扩展的 <strong>Service Worker</strong> 控制台，执行下方脚本写入测试规则</li>
+      <li>用本页或任意 https 页面打开此 HTML（扩展 content script 需注入当前 tab）</li>
+      <li>若刚写入规则，<strong>刷新本页</strong> 以确保 req-proxy 收到 page 规则</li>
+    </ol>
+    <pre id="load-rules-script"></pre>
+    <button type="button" id="copy-rules">复制加载规则脚本</button>
+  </section>
+
+  <section>
+    <h2>1. 运行测试</h2>
+    <div class="toolbar">
+      <button type="button" class="primary" id="run-all">运行全部</button>
+      <button type="button" id="clear-results">清空结果</button>
+    </div>
+    <p class="summary" id="summary">尚未运行</p>
+    <div class="grid" id="test-grid"></div>
+  </section>
+
+  <script>
+    /** 测试用 URL 与规则（单一数据源；均为 jsonplaceholder 真实存在的路径） */
+    const ENDPOINTS = {
+      block: 'https://jsonplaceholder.typicode.com/posts/91',
+      redirect: 'https://jsonplaceholder.typicode.com/posts/92',
+      redirectTarget: 'https://jsonplaceholder.typicode.com/posts/1',
+      reqHeaders: 'https://jsonplaceholder.typicode.com/posts/94',
+      respHeaders: 'https://jsonplaceholder.typicode.com/posts/1',
+      body: 'https://jsonplaceholder.typicode.com/posts/93',
+      delay: 'https://jsonplaceholder.typicode.com/users/10',
+    }
+
+    const SAMPLE_RULES = [
+      { id: 1, name: 'test-block', enabled: true, condition: { urlPattern: '*://jsonplaceholder.typicode.com/posts/91*' }, action: { type: 'block' } },
+      { id: 2, name: 'test-redirect', enabled: true, condition: { urlPattern: '*://jsonplaceholder.typicode.com/posts/92*' }, action: { type: 'redirect', redirectUrl: ENDPOINTS.redirectTarget } },
+      { id: 3, name: 'test-req-header', enabled: true, condition: { urlPattern: '*://jsonplaceholder.typicode.com/posts/94*' }, action: { type: 'modifyRequestHeaders', headers: [{ name: 'X-Test-Inject', value: 'hello', operation: 'set' }] } },
+      { id: 4, name: 'test-resp-header', enabled: true, condition: { urlPattern: '*://jsonplaceholder.typicode.com/posts/1*' }, action: { type: 'modifyResponseHeaders', headers: [{ name: 'X-Test-Resp', value: 'world', operation: 'set' }] } },
+      { id: 5, name: 'test-body', enabled: true, condition: { urlPattern: '*://jsonplaceholder.typicode.com/posts/93*' }, action: { type: 'modifyResponseBody', body: '{"hacked":true}', contentType: 'application/json' } },
+      { id: 6, name: 'test-delay', enabled: true, condition: { urlPattern: '*://jsonplaceholder.typicode.com/users/10*' }, action: { type: 'delay', delayMs: 2000 } },
+    ]
+
+    const LOAD_RULES_SCRIPT = `chrome.storage.local.set({ rules: ${JSON.stringify(SAMPLE_RULES, null, 2)} })`
+
+    const TESTS = [
+      {
+        id: 'block',
+        title: 'Block',
+        channel: 'dnr',
+        expect: 'fetch 失败（Failed to fetch / blocked）',
+        async run() {
+          try {
+            await fetch(ENDPOINTS.block)
+            return { ok: false, text: '请求未被拦截，仍成功返回' }
+          }
+          catch (e) {
+            return { ok: true, text: String(e.message || e) }
+          }
+        },
+      },
+      {
+        id: 'redirect',
+        title: 'Redirect',
+        channel: 'dnr',
+        expect: `response.url 为 ${ENDPOINTS.redirectTarget}`,
+        async run() {
+          const res = await fetch(ENDPOINTS.redirect)
+          const ok = res.url === ENDPOINTS.redirectTarget
+          return { ok, text: `url = ${res.url}` }
+        },
+      },
+      {
+        id: 'req-header',
+        title: 'Modify Request Headers',
+        channel: 'dnr',
+        expect: '请到 Network → posts/94 → Request Headers 查看 X-Test-Inject: hello',
+        async run() {
+          const res = await fetch(ENDPOINTS.reqHeaders)
+          if (!res.ok)
+            return { ok: false, text: `请求失败 status=${res.status}` }
+          return {
+            ok: false,
+            warn: true,
+            text: '请求已发出。请在 Network → posts/94 → Request Headers 确认 X-Test-Inject: hello',
+          }
+        },
+      },
+      {
+        id: 'resp-header',
+        title: 'Modify Response Headers',
+        channel: 'dnr',
+        expect: 'fetch 读头常为 null；请到 Network → posts/1 → Response Headers 查看 X-Test-Resp: world',
+        async run() {
+          const res = await fetch(ENDPOINTS.respHeaders)
+          const header = res.headers.get('X-Test-Resp')
+          const ok = header === 'world'
+          return {
+            ok,
+            warn: !ok,
+            text: header === null
+              ? 'fetch 读不到 X-Test-Resp（CORS 限制），请在 Network 面板确认响应头'
+              : `X-Test-Resp = ${JSON.stringify(header)}`,
+          }
+        },
+      },
+      {
+        id: 'body',
+        title: 'Modify Response Body',
+        channel: 'proxy',
+        expect: 'body 为 {"hacked":true}',
+        async run() {
+          const res = await fetch(ENDPOINTS.body)
+          const text = await res.text()
+          const ok = text === '{"hacked":true}'
+          return { ok, text: `body = ${text.slice(0, 120)}` }
+        },
+      },
+      {
+        id: 'delay',
+        title: 'Delay',
+        channel: 'proxy',
+        expect: '耗时 ≥ 2000ms（含网络时间）',
+        async run() {
+          const t0 = Date.now()
+          await fetch(ENDPOINTS.delay)
+          const ms = Date.now() - t0
+          const ok = ms >= 2000
+          return { ok, text: `${ms} ms` }
+        },
+      },
+    ]
+
+    document.getElementById('load-rules-script').textContent = LOAD_RULES_SCRIPT
+
+    const grid = document.getElementById('test-grid')
+    const summaryEl = document.getElementById('summary')
+
+    function renderCards() {
+      grid.innerHTML = TESTS.map(t => `
+        <div class="card" data-id="${t.id}">
+          <div class="card-header">
+            <span class="card-title">${t.title}</span>
+            <span class="badge ${t.channel}">${t.channel === 'dnr' ? 'DNR' : 'Page Hook'}</span>
+          </div>
+          <div class="meta">id: ${t.id}</div>
+          <div class="expect">期望：${t.expect}</div>
+          <button type="button" data-run="${t.id}">运行</button>
+          <div class="result pending" data-result="${t.id}">等待运行…</div>
+        </div>
+      `).join('')
+    }
+
+    function setResult(id, state, text) {
+      const el = document.querySelector(`[data-result="${id}"]`)
+      if (!el) return
+      el.className = `result ${state}`
+      el.textContent = text
+    }
+
+    async function runTest(test) {
+      setResult(test.id, 'pending', '运行中…')
+      try {
+        const { ok, warn, text } = await test.run()
+        setResult(test.id, warn ? 'warn' : ok ? 'pass' : 'fail', text)
+        return { ok, warn }
+      }
+      catch (e) {
+        setResult(test.id, 'fail', String(e.message || e))
+        return { ok: false, warn: false }
+      }
+    }
+
+    async function runAll() {
+      summaryEl.textContent = '运行中…'
+      let pass = 0
+      let warn = 0
+      let fail = 0
+      for (const test of TESTS) {
+        const r = await runTest(test)
+        if (r.ok) pass++
+        else if (r.warn) warn++
+        else fail++
+      }
+      summaryEl.textContent = `完成：${pass} 通过，${warn} 需人工确认，${fail} 失败（共 ${TESTS.length} 项）`
+    }
+
+    document.getElementById('copy-rules').addEventListener('click', async () => {
+      await navigator.clipboard.writeText(LOAD_RULES_SCRIPT)
+      document.getElementById('copy-rules').textContent = '已复制'
+      setTimeout(() => { document.getElementById('copy-rules').textContent = '复制加载规则脚本' }, 2000)
+    })
+
+    document.getElementById('run-all').addEventListener('click', runAll)
+    document.getElementById('clear-results').addEventListener('click', () => {
+      TESTS.forEach(t => setResult(t.id, 'pending', '等待运行…'))
+      summaryEl.textContent = '尚未运行'
+    })
+
+    grid.addEventListener('click', (e) => {
+      const id = e.target.dataset?.run
+      if (!id) return
+      const test = TESTS.find(t => t.id === id)
+      if (test) runTest(test)
+    })
+
+    renderCards()
+  </script>
+</body>
+</html>

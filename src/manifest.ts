@@ -39,8 +39,9 @@ export async function getManifest() {
       'storage',
       'activeTab',
       'sidePanel',
+      'declarativeNetRequest',
     ],
-    host_permissions: ['*://*/*'],
+    host_permissions: ['<all_urls>'],
     content_scripts: [
       {
         matches: [
@@ -50,6 +51,7 @@ export async function getManifest() {
           'dist/contentScripts/index.global.js',
         ],
       },
+      { matches: ['<all_urls>'], js: ['dist/contentScripts/req-proxy.js'], world: 'MAIN', run_at: 'document_start' },
     ],
     web_accessible_resources: [
       {

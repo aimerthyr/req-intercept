@@ -12,6 +12,7 @@
     },
     "resolveJsonModule": true,
     "types": [
+      "chrome",
       "vite/client"
     ],
     "strict": true,

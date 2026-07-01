@@ -1,5 +1,11 @@
-import { onMessage, sendMessage } from 'webext-bridge/background'
-import type { Tabs } from 'webextension-polyfill'
+import { sendMessage } from 'webext-bridge/background'
+import { getRules, isPageHookRule, needsPageHook } from './rule'
+import { syncDnrRules } from './dnrCompiler'
+
+/**
+ *  background 中 无法使用 window doucemnt DOM 之类的 API 因为它是跑在  Service Worker 里的，它和页面是两个 js 环境
+ *  只能使用 拓展 API 例如 chrome.storage sendMessage 等等
+ */
 
 // only on dev mode
 if (import.meta.hot) {
@@ -19,41 +25,29 @@ browser.runtime.onInstalled.addListener((): void => {
   console.log('Extension installed')
 })
 
-let previousTabId = 0
+async function recompile() {
+  const rules = await getRules()
+  const dnrRules = rules.filter(r => r.enabled && !needsPageHook(r))
+  const pageRules = rules.filter(isPageHookRule)
 
-// communication example: send previous tab title from background page
-// see shim.d.ts for type declaration
-browser.tabs.onActivated.addListener(async ({ tabId }) => {
-  if (!previousTabId) {
-    previousTabId = tabId
-    return
-  }
+  // 1. 默认走 DNR：block / redirect / modifyHeaders
+  await syncDnrRules(dnrRules)
 
-  let tab: Tabs.Tab
+  // 2. 走页面劫持：modifyResponseBody / delay
+  const tabs = await chrome.tabs.query({})
+  await Promise.all(
+    tabs.map(tab =>
+      tab.id
+        ? sendMessage('response-rules-updated', pageRules as never, `content-script@${tab.id}`).catch(() => {})
+        : null,
+    ),
+  )
+}
 
-  try {
-    tab = await browser.tabs.get(previousTabId)
-    previousTabId = tabId
-  }
-  catch {
-    return
-  }
-
-  // eslint-disable-next-line no-console
-  console.log('previous tab', tab)
-  sendMessage('tab-prev', { title: tab.title }, { context: 'content-script', tabId })
+// 规则变化时触发重新编译
+chrome.storage.onChanged.addListener((changes, area) => {
+  if (area === 'local' && changes.rules)
+    recompile()
 })
 
-onMessage('get-current-tab', async () => {
-  try {
-    const tab = await browser.tabs.get(previousTabId)
-    return {
-      title: tab?.title,
-    }
-  }
-  catch {
-    return {
-      title: undefined,
-    }
-  }
-})
+recompile()
