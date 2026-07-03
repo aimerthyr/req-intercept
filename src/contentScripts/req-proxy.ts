@@ -29,17 +29,38 @@ window.fetch = async function (input: RequestInfo | URL, init?: RequestInit) {
   const hit = findHit(url)
   const action = hit?.action
 
+  if (hit) {
+    // eslint-disable-next-line no-console
+    console.log('[ReqProxy] 🎯 拦截到 fetch 请求:', {
+      url,
+      ruleName: hit.name,
+      actionType: action?.type,
+    })
+  }
+
   if (action?.type === 'delay') {
     await new Promise(r => setTimeout(r, action.delayMs))
   }
 
+  // 修改请求体
+  if (action?.type === 'modifyRequestBody') {
+    const headers = new Headers(init?.headers)
+    const modifiedInit: RequestInit = {
+      ...init,
+      body: action.body,
+      headers,
+    }
+    return await originalFetch(input, modifiedInit)
+  }
+
   const response = await originalFetch(input, init)
 
+  // 修改响应体
   if (action?.type === 'modifyResponseBody') {
     return new Response(action.body, {
       status: response.status,
       statusText: response.statusText,
-      headers: { 'Content-Type': action.contentType ?? 'application/json' },
+      headers: response.headers,
     })
   }
   return response
@@ -59,10 +80,26 @@ class PatchedXHR extends OriginalXHR {
     const hit = findHit(this.__url)
     const action = hit?.action
 
+    if (hit) {
+      // eslint-disable-next-line no-console
+      console.log('[ReqProxy] 🎯 拦截到 XHR 请求:', {
+        url: this.__url,
+        ruleName: hit.name,
+        actionType: action?.type,
+      })
+    }
+
     if (action?.type === 'delay') {
       setTimeout(() => super.send(body), action.delayMs)
       return
     }
+
+    // 修改请求体
+    if (action?.type === 'modifyRequestBody') {
+      return super.send(action.body)
+    }
+
+    // 修改响应体
     if (action?.type === 'modifyResponseBody') {
       const patchedBody = action.body
       this.addEventListener('readystatechange', () => {

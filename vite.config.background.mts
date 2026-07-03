@@ -1,11 +1,28 @@
 import { defineConfig } from 'vite'
-import { sharedConfig } from './vite.config.mjs'
+import AutoImport from 'unplugin-auto-import/vite'
 import { isDev, r } from './scripts/utils'
 import packageJson from './package.json'
 
-// bundling the content script using Vite
+// bundling the background script using Vite
 export default defineConfig({
-  ...sharedConfig,
+  resolve: {
+    alias: {
+      '~/': `${r('src')}/`,
+    },
+  },
+  plugins: [
+    AutoImport({
+      imports: [
+        'vue',
+        {
+          'webextension-polyfill': [
+            ['=', 'browser'],
+          ],
+        },
+      ],
+      dts: r('src/auto-imports.d.ts'),
+    }),
+  ],
   define: {
     '__DEV__': isDev,
     '__NAME__': JSON.stringify(packageJson.name),

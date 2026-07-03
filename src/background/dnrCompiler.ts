@@ -1,11 +1,14 @@
 import type { HeaderOp, Rule } from './rule'
 
-function toHeaderInfo(ops: HeaderOp[]): chrome.declarativeNetRequest.ModifyHeaderInfo[] {
-  return ops.map(op => ({
-    header: op.name,
-    operation: op.operation as chrome.declarativeNetRequest.HeaderOperation,
-    value: op.value,
-  }))
+function toHeaderInfo(ops: HeaderOp[]): chrome.declarativeNetRequest.ModifyHeaderInfo[] | null {
+  const items = ops
+    .filter(op => op.name.trim())
+    .map(op => ({
+      header: op.name.trim(),
+      operation: op.operation as chrome.declarativeNetRequest.HeaderOperation,
+      value: op.value,
+    }))
+  return items.length > 0 ? items : null
 }
 
 function toDnrRule(rule: Rule): chrome.declarativeNetRequest.Rule | null {
@@ -23,20 +26,28 @@ function toDnrRule(rule: Rule): chrome.declarativeNetRequest.Rule | null {
         condition,
         action: { type: 'redirect', redirect: { url: rule.action.redirectUrl } },
       }
-    case 'modifyRequestHeaders':
+    case 'modifyRequestHeaders': {
+      const requestHeaders = toHeaderInfo(rule.action.headers)
+      if (!requestHeaders)
+        return null
       return {
         id: rule.id,
         priority: 1,
         condition,
-        action: { type: 'modifyHeaders', requestHeaders: toHeaderInfo(rule.action.headers) },
+        action: { type: 'modifyHeaders', requestHeaders },
       }
-    case 'modifyResponseHeaders':
+    }
+    case 'modifyResponseHeaders': {
+      const responseHeaders = toHeaderInfo(rule.action.headers)
+      if (!responseHeaders)
+        return null
       return {
         id: rule.id,
         priority: 1,
         condition,
-        action: { type: 'modifyHeaders', responseHeaders: toHeaderInfo(rule.action.headers) },
+        action: { type: 'modifyHeaders', responseHeaders },
       }
+    }
     default:
       return null // modifyResponseBody/delay 调用前已被过滤，这里只是兜底
   }

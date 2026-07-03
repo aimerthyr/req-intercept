@@ -1,4 +1,5 @@
 import type { Rule } from '~/shared/rule'
+import type { GlobalConfig } from '~/shared/type'
 
 export type {
   HeaderOp,
@@ -12,5 +13,10 @@ export { isPageHookRule, needsPageHook } from '~/shared/rule'
 
 export async function getRules(): Promise<Rule[]> {
   const { rules } = await chrome.storage.local.get('rules')
-  return (rules ?? []) as Rule[]
+  return JSON.parse((rules || '[]') as string) as Rule[]
+}
+
+export async function getGlobalConfig(): Promise<GlobalConfig> {
+  const { globalConfig } = await chrome.storage.local.get('globalConfig')
+  return JSON.parse((globalConfig || '{}') as string) as GlobalConfig
 }

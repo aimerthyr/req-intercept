@@ -1,30 +1,34 @@
 /* eslint-disable no-console */
-import { onMessage } from 'webext-bridge/content-script'
-import { createApp } from 'vue'
-import App from './views/App.vue'
-import { setupApp } from '~/logic/common-setup'
+import { onMessage, sendMessage } from 'webext-bridge/content-script'
 
 // Firefox `browser.tabs.executeScript()` requires scripts return a primitive value
 (() => {
-  console.info('[vitesse-webext] Hello world from content script')
+  console.info('[ContentScript] 🚀 Content Script 已加载')
 
+  async function pushRulesToPage() {
+    try {
+      const config = await sendMessage('get-page-global-config', undefined, 'background')
+      if (!config.extensionEnabled)
+        return
+      const response = await sendMessage('get-page-rules', undefined, 'background')
+      window.postMessage({ __type: 'RR_RULES_UPDATE', rules: response }, '*')
+    }
+    catch (err) {
+      console.error('[ContentScript] 获取规则失败:', err)
+    }
+  }
+
+  pushRulesToPage()
+
+  window.addEventListener('message', (e) => {
+    if (e.source !== window || e.data?.__type !== 'RR_REQUEST_RULES')
+      return
+    pushRulesToPage()
+  })
+
+  // 监听来自 background 的规则更新
   onMessage('response-rules-updated', ({ data }) => {
     // 通过 window.postMessage 广播给 req-proxy.ts 处理
     window.postMessage({ __type: 'RR_RULES_UPDATE', rules: data }, '*')
   })
-
-  // mount component to context window
-  const container = document.createElement('div')
-  container.id = __NAME__
-  const root = document.createElement('div')
-  const styleEl = document.createElement('link')
-  const shadowDOM = container.attachShadow?.({ mode: __DEV__ ? 'open' : 'closed' }) || container
-  styleEl.setAttribute('rel', 'stylesheet')
-  styleEl.setAttribute('href', browser.runtime.getURL('dist/contentScripts/style.css'))
-  shadowDOM.appendChild(styleEl)
-  shadowDOM.appendChild(root)
-  document.body.appendChild(container)
-  const app = createApp(App)
-  setupApp(app)
-  app.mount(root)
 })()

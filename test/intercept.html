@@ -202,7 +202,7 @@
       { id: 2, name: 'test-redirect', enabled: true, condition: { urlPattern: '*://jsonplaceholder.typicode.com/posts/92*' }, action: { type: 'redirect', redirectUrl: ENDPOINTS.redirectTarget } },
       { id: 3, name: 'test-req-header', enabled: true, condition: { urlPattern: '*://jsonplaceholder.typicode.com/posts/94*' }, action: { type: 'modifyRequestHeaders', headers: [{ name: 'X-Test-Inject', value: 'hello', operation: 'set' }] } },
       { id: 4, name: 'test-resp-header', enabled: true, condition: { urlPattern: '*://jsonplaceholder.typicode.com/posts/1*' }, action: { type: 'modifyResponseHeaders', headers: [{ name: 'X-Test-Resp', value: 'world', operation: 'set' }] } },
-      { id: 5, name: 'test-body', enabled: true, condition: { urlPattern: '*://jsonplaceholder.typicode.com/posts/93*' }, action: { type: 'modifyResponseBody', body: '{"hacked":true}', contentType: 'application/json' } },
+      { id: 5, name: 'test-body', enabled: true, condition: { urlPattern: '*://jsonplaceholder.typicode.com/posts/93*' }, action: { type: 'modifyResponseBody', body: '{"hacked":true}' } },
       { id: 6, name: 'test-delay', enabled: true, condition: { urlPattern: '*://jsonplaceholder.typicode.com/users/10*' }, action: { type: 'delay', delayMs: 2000 } },
     ]
 

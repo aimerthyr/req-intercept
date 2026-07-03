@@ -24,7 +24,9 @@ export const contentScriptEntries: ContentScriptEntry[] = [
 
 export function createContentConfig(entry: ContentScriptEntry, watch?: boolean): UserConfig {
   return defineConfig({
-    ...sharedConfig,
+    root: sharedConfig.root,
+    resolve: sharedConfig.resolve,
+    plugins: [],
     define: {
       '__DEV__': isDev,
       '__NAME__': JSON.stringify(packageJson.name),

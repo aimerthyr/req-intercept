@@ -1,5 +1,6 @@
-import { sendMessage } from 'webext-bridge/background'
-import { getRules, isPageHookRule, needsPageHook } from './rule'
+import { onMessage, sendMessage } from 'webext-bridge/background'
+import { syncActionIcon } from './actionIcon'
+import { type Rule, getGlobalConfig, getRules, isPageHookRule, needsPageHook } from './rule'
 import { syncDnrRules } from './dnrCompiler'
 
 /**
@@ -22,18 +23,28 @@ browser.sidePanel
 
 browser.runtime.onInstalled.addListener((): void => {
   // eslint-disable-next-line no-console
-  console.log('Extension installed')
+  console.log('[Background] 🚀 Extension installed')
 })
 
-async function recompile() {
+onMessage('get-page-rules', async () => {
   const rules = await getRules()
+  const pageRules = rules.filter(r => r.enabled && isPageHookRule(r))
+  return pageRules
+})
+
+onMessage('get-page-global-config', async () => {
+  const config = await getGlobalConfig()
+  return config
+})
+
+async function recompile(rules: Rule[]) {
   const dnrRules = rules.filter(r => r.enabled && !needsPageHook(r))
-  const pageRules = rules.filter(isPageHookRule)
+  const pageRules = rules.filter(r => r.enabled && isPageHookRule(r))
 
   // 1. 默认走 DNR：block / redirect / modifyHeaders
   await syncDnrRules(dnrRules)
 
-  // 2. 走页面劫持：modifyResponseBody / delay
+  // 2. 走页面劫持：modifyResponseBody / modifyRequestBody / delay
   const tabs = await chrome.tabs.query({})
   await Promise.all(
     tabs.map(tab =>
@@ -44,10 +55,23 @@ async function recompile() {
   )
 }
 
+async function onRulesChanged() {
+  const rules = await getRules()
+  const config = await getGlobalConfig()
+  await syncActionIcon(rules)
+  try {
+    await recompile(config.extensionEnabled ? rules : [])
+  }
+  catch (error) {
+    console.error('[Background] recompile failed:', error)
+  }
+}
+
 // 规则变化时触发重新编译
 chrome.storage.onChanged.addListener((changes, area) => {
-  if (area === 'local' && changes.rules)
-    recompile()
+  if (area === 'local' && (changes.rules || changes.globalConfig))
+    onRulesChanged()
 })
 
-recompile()
+// 初始化时编译一次
+onRulesChanged()

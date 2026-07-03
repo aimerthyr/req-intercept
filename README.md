@@ -1,138 +1,121 @@
-# WebExtension Vite Starter
+# Request Interceptor
 
-A [Vite](https://vitejs.dev/) powered WebExtension ([Chrome](https://developer.chrome.com/docs/extensions/reference/), [FireFox](https://addons.mozilla.org/en-US/developers/), etc.) starter template.
+一个功能强大的浏览器扩展，用于拦截、修改、延迟和映射 HTTP 请求和响应。
 
-<p align="center">
-<sub>Popup</sub><br/>
-<img width="655" src="https://user-images.githubusercontent.com/11247099/126741643-813b3773-17ff-4281-9737-f319e00feddc.png"><br/>
-<sub>Options Page</sub><br/>
-<img width="655" src="https://user-images.githubusercontent.com/11247099/126741653-43125b62-6578-4452-83a7-bee19be2eaa2.png"><br/>
-<sub>Inject Vue App into the Content Script</sub><br/>
-<img src="https://user-images.githubusercontent.com/11247099/130695439-52418cf0-e186-4085-8e19-23fe808a274e.png">
-</p>
+[![Release](https://img.shields.io/github/v/release/aimerthyr/req-intercept)](https://github.com/aimerthyr/req-intercept/releases)
+[![License](https://img.shields.io/github/license/aimerthyr/req-intercept)](./LICENSE)
 
-## Features
+## ✨ 功能特性
 
-- ⚡️ **Instant HMR** - use **Vite** on dev (no more refresh!)
-- 🥝 Vue 3 - Composition API, [`<script setup>` syntax](https://github.com/vuejs/rfcs/blob/master/active-rfcs/0040-script-setup.md) and more!
-- 💬 Effortless communications - powered by [`webext-bridge`](https://github.com/serversideup/webext-bridge) and [VueUse](https://github.com/antfu/vueuse) storage
-- 🌈 [UnoCSS](https://github.com/unocss/unocss) - The instant on-demand Atomic CSS engine.
-- 🦾 [TypeScript](https://www.typescriptlang.org/) - type safe
-- 📦 [Components auto importing](./src/components)
-- 🌟 [Icons](./src/components) - Access to icons from any iconset directly
-- 🖥 Content Script - Use Vue even in content script
-- 🌍 WebExtension - isomorphic extension for Chrome, Firefox, and others
-- 📃 Dynamic `manifest.json` with full type support
+- 🔄 **请求拦截** - 拦截和修改 HTTP 请求
+- 📝 **响应修改** - 修改 API 响应内容
+- ⏱️ **请求延迟** - 模拟网络延迟
+- 🔀 **URL 映射** - 将请求重定向到其他 URL
+- 🎯 **灵活匹配** - 支持通配符和正则表达式
+- 💾 **规则管理** - 导入/导出规则配置
+- 🎨 **现代 UI** - 基于 Vue 3 + Ant Design Vue
+- 🔥 **实时更新** - 规则变更立即生效
 
-## Pre-packed
+## 📦 安装
 
-### WebExtension Libraries
+### Chrome/Edge
 
-- [`webextension-polyfill`](https://github.com/mozilla/webextension-polyfill) - WebExtension browser API Polyfill with types
-- [`webext-bridge`](https://github.com/serversideup/webext-bridge) - effortlessly communication between contexts
+1. 从 [Releases](https://github.com/aimerthyr/req-intercept/releases) 下载 `extension.zip`
+2. 解压到本地目录
+3. 打开 `chrome://extensions/`
+4. 启用"开发者模式"
+5. 点击"加载已解压的扩展程序"
+6. 选择解压后的 `extension` 目录
 
-### Vite Plugins
+### Firefox
 
-- [`unplugin-auto-import`](https://github.com/unplugin/unplugin-auto-import) - Directly use `browser` and Vue Composition API without importing
-- [`unplugin-vue-components`](https://github.com/unplugin/unplugin-vue-components) - components auto import
-- [`unplugin-icons`](https://github.com/unplugin/unplugin-icons) - icons as components
-  - [Iconify](https://iconify.design) - use icons from any icon sets [🔍Icônes](https://icones.netlify.app/)
+1. 从 [Releases](https://github.com/aimerthyr/req-intercept/releases) 下载 `extension.xpi`
+2. 打开 `about:addons`
+3. 点击齿轮图标 → "从文件安装附加组件"
+4. 选择下载的 `.xpi` 文件
 
-### Vue Plugins
+## 🚀 使用指南
 
-- [VueUse](https://github.com/antfu/vueuse) - collection of useful composition APIs
+### 1. 启用扩展
 
-### UI Frameworks
+点击工具栏图标，在弹出窗口顶部切换全局开关。
 
-- [UnoCSS](https://github.com/unocss/unocss) - the instant on-demand Atomic CSS engine
+### 2. 创建规则
 
-### Coding Style
+1. 点击"设置"按钮进入规则管理页面
+2. 点击"添加规则"
+3. 配置规则：
+   - **规则名称**：便于识别的名称
+   - **URL 模式**：使用通配符（`*api.example.com*`）或正则表达式
+   - **拦截动作**：选择操作类型
 
-- Use Composition API with [`<script setup>` SFC syntax](https://github.com/vuejs/rfcs/pull/227)
-- [ESLint](https://eslint.org/) with [@antfu/eslint-config](https://github.com/antfu/eslint-config), single quotes, no semi
+### 3. 拦截动作类型
 
-### Dev tools
+| 动作 | 说明 | 使用场景 |
+|:---|:---|:---|
+| **阻止请求** | 直接阻止请求发送 | 屏蔽广告、跟踪脚本 |
+| **延迟请求** | 延迟指定毫秒后发送 | 模拟慢速网络 |
+| **重定向** | 将请求重定向到新 URL | 切换 API 环境 |
+| **修改请求头** | 修改请求 Headers | 添加认证信息 |
+| **修改请求体** | 修改 POST/PUT 请求体 | 测试不同请求参数 |
+| **修改响应头** | 修改响应 Headers | 跨域、缓存控制 |
+| **修改响应体** | 修改 API 响应内容 | Mock 数据、测试异常 |
 
-- [TypeScript](https://www.typescriptlang.org/)
-- [pnpm](https://pnpm.js.org/) - fast, disk space efficient package manager
-- [esno](https://github.com/antfu/esno) - TypeScript / ESNext node runtime powered by esbuild
-- [npm-run-all](https://github.com/mysticatea/npm-run-all) - Run multiple npm-scripts in parallel or sequential
-- [web-ext](https://github.com/mozilla/web-ext) - Streamlined experience for developing web extensions
+### 4. URL 模式示例
 
-## Use the Template
+```
+通配符模式:
+  *://api.example.com/*          匹配所有协议
+  https://*.example.com/api/*    匹配所有子域名
+  *://*/user/*                   匹配所有域名的 user 路径
 
-### GitHub Template
-
-[Create a repo from this template on GitHub](https://github.com/antfu/vitesse-webext/generate).
-
-### Clone to local
-
-If you prefer to do it manually with the cleaner git history
-
-> If you don't have pnpm installed, run: npm install -g pnpm
-
-```bash
-npx degit antfu/vitesse-webext my-webext
-cd my-webext
-pnpm i
+正则表达式模式:
+  ^https://api\.example\.com/v[0-9]+/.*
+  ^https://.*\.example\.com/api/.*
 ```
 
-## Usage
+## 🛠️ 开发
 
-### Folders
+### 环境要求
 
-- `src` - main source.
-  - `contentScript` - scripts and components to be injected as `content_script`
-  - `background` - scripts for background.
-  - `components` - auto-imported Vue components that are shared in popup and options page.
-  - `styles` - styles shared in popup and options page
-  - `assets` - assets used in Vue components
-  - `manifest.ts` - manifest for the extension.
-- `extension` - extension package root.
-  - `assets` - static assets (mainly for `manifest.json`).
-  - `dist` - built files, also serve stub entry for Vite on development.
-- `scripts` - development and bundling helper scripts.
+- Node.js >= 18
+- pnpm >= 9
 
-### Development
+### 安装依赖
 
 ```bash
-pnpm dev
+pnpm install
 ```
 
-Then **load extension in browser with the `extension/` folder**.
-
-For Firefox developers, you can run the following command instead:
+### 开发模式
 
 ```bash
-pnpm dev-firefox
+# Chrome/Edge 开发
+pnpm run dev
+
+# Firefox 开发
+pnpm run dev-firefox
 ```
 
-`web-ext` auto reload the extension when `extension/` files changed.
-
-> While Vite handles HMR automatically in the most of the case, [Extensions Reloader](https://chromewebstore.google.com/detail/extensions-reloader/fimgfedafeadlieiabdeeaodndnlbhid) is still recommended for cleaner hard reloading.
-
-## Using Gitpod
-
-If you have a web browser, you can get a fully pre-configured development environment with one click:
-
-[![Open in Gitpod](https://gitpod.io/button/open-in-gitpod.svg)](https://gitpod.io/#https://github.com/antfu/vitesse-webext)
-
-### Build
-
-To build the extension, run
+### 构建
 
 ```bash
-pnpm build
+# 生产构建
+pnpm run build
+
+# 打包扩展
+pnpm run pack
+
+# 快捷命令（构建 + 打包）
+pnpm run release
 ```
 
-And then pack files under `extension`, you can upload `extension.crx` or `extension.xpi` to appropriate extension store.
+### 本地测试
 
-## Credits
+```bash
+# 在 Chrome 中运行
+pnpm run start:chromium
 
-[![Volta](https://user-images.githubusercontent.com/904724/195351818-9e826ea9-12a0-4b06-8274-352743cd2047.png)](https://volta.net)
-
-This template is originally made for the [volta.net](https://volta.net) browser extension.
-
-## Variations
-
-This is a variant of [Vitesse](https://github.com/antfu/vitesse), check out the [full variations list](https://github.com/antfu/vitesse#variations).
+# 在 Firefox 中运行
+pnpm run start:firefox
+```
