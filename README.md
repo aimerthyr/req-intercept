@@ -1,10 +1,6 @@
 # Request Interceptor
 
 一个功能强大的浏览器扩展，用于拦截、修改、延迟和映射 HTTP 请求和响应。
-
-[![Release](https://img.shields.io/github/v/release/aimerthyr/req-intercept)](https://github.com/aimerthyr/req-intercept/releases)
-[![License](https://img.shields.io/github/license/aimerthyr/req-intercept)](./LICENSE)
-
 ## ✨ 功能特性
 
 - 🔄 **请求拦截** - 拦截和修改 HTTP 请求

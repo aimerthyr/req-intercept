@@ -1,0 +1,76 @@
+name: CI
+
+on:
+  push:
+    branches:
+      - main
+      - master
+      - develop
+  pull_request:
+    branches:
+      - main
+      - master
+      - develop
+
+jobs:
+  build:
+    name: Build
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout 代码
+        uses: actions/checkout@v4
+
+      - name: 安装 pnpm
+        uses: pnpm/action-setup@v4
+
+      - name: 设置 Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: pnpm
+
+      - name: 安装依赖
+        run: pnpm install --frozen-lockfile
+
+      - name: 构建扩展
+        run: pnpm run build
+
+      - name: 检查产物
+        run: |
+          if [ ! -d "extension/dist" ]; then
+            echo "❌ 构建失败：extension/dist 目录不存在"
+            exit 1
+          fi
+          echo "✅ 构建成功"
+
+      - name: 上传构建产物
+        uses: actions/upload-artifact@v4
+        with:
+          name: extension-build-${{ github.sha }}
+          path: extension/
+          retention-days: 7
+
+  # 可选：单元测试（如果有的话）
+  # test:
+  #   name: Unit Tests
+  #   runs-on: ubuntu-latest
+  #
+  #   steps:
+  #     - name: Checkout 代码
+  #       uses: actions/checkout@v4
+  #
+  #     - name: 安装 pnpm
+  #       uses: pnpm/action-setup@v4
+  #
+  #     - name: 设置 Node.js
+  #       uses: actions/setup-node@v4
+  #       with:
+  #         node-version: '22'
+  #         cache: pnpm
+  #
+  #     - name: 安装依赖
+  #       run: pnpm install --frozen-lockfile
+  #
+  #     - name: 运行测试
+  #       run: pnpm run test
