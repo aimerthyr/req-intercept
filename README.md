@@ -12,6 +12,13 @@
 - 🎨 **现代 UI** - 基于 Vue 3 + Ant Design Vue
 - 🔥 **实时更新** - 规则变更立即生效
 
+## 效果图
+![效果图1](/images/image1.png)
+
+![效果图2](/images/image2.png)
+
+![效果图3](/images/image3.png)
+
 ## 📦 安装
 
 ### Chrome/Edge
@@ -68,50 +75,4 @@
 正则表达式模式:
   ^https://api\.example\.com/v[0-9]+/.*
   ^https://.*\.example\.com/api/.*
-```
-
-## 🛠️ 开发
-
-### 环境要求
-
-- Node.js >= 18
-- pnpm >= 9
-
-### 安装依赖
-
-```bash
-pnpm install
-```
-
-### 开发模式
-
-```bash
-# Chrome/Edge 开发
-pnpm run dev
-
-# Firefox 开发
-pnpm run dev-firefox
-```
-
-### 构建
-
-```bash
-# 生产构建
-pnpm run build
-
-# 打包扩展
-pnpm run pack
-
-# 快捷命令（构建 + 打包）
-pnpm run release
-```
-
-### 本地测试
-
-```bash
-# 在 Chrome 中运行
-pnpm run start:chromium
-
-# 在 Firefox 中运行
-pnpm run start:firefox
 ```
