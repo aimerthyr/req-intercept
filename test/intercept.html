@@ -79,10 +79,12 @@
       padding: 8px 16px;
       border-radius: 8px;
       font-size: 0.875rem;
+      transition: all 0.2s;
     }
 
     button:hover { border-color: var(--accent); }
     button.primary { background: var(--accent); border-color: var(--accent); color: #fff; }
+    button.success { background: var(--pass); border-color: var(--pass); color: #fff; }
 
     .grid {
       display: grid;
@@ -98,7 +100,10 @@
       border-radius: 10px;
       padding: 14px;
       background: #121a26;
+      transition: border-color 0.2s;
     }
+
+    .card:hover { border-color: var(--accent); }
 
     .card-header {
       display: flex;
@@ -120,7 +125,7 @@
     }
 
     .badge.dnr { background: #1e3a5f; color: #93c5fd; }
-    .badge.proxy { background: #3f2e1e; color: #fcd34d; }
+    .badge.page-hook { background: #3f2e1e; color: #fcd34d; }
 
     .meta {
       font-size: 0.75rem;
@@ -161,141 +166,174 @@
 </head>
 <body>
   <h1>Req Intercept 功能测试</h1>
-  <p class="subtitle">全部使用 jsonplaceholder.typicode.com 真实接口（支持 CORS，无 404）。请先加载扩展并写入规则。</p>
+  <p class="subtitle">使用 jsonplaceholder.typicode.com 真实接口验证所有拦截场景</p>
 
   <section>
-    <h2>0. 准备</h2>
+    <h2>📋 准备步骤</h2>
     <ol class="steps">
-      <li>在 <code>chrome://extensions</code> 加载本扩展并刷新</li>
+      <li>在 <code>chrome://extensions</code> 加载本扩展</li>
       <li>打开扩展的 <strong>Service Worker</strong> 控制台，执行下方脚本写入测试规则</li>
-      <li>用本页或任意 https 页面打开此 HTML（扩展 content script 需注入当前 tab）</li>
-      <li>若刚写入规则，<strong>刷新本页</strong> 以确保 req-proxy 收到 page 规则</li>
+      <li>在 HTTPS 网站打开此页面（确保 content script 可注入）</li>
+      <li>写入规则后，<strong>刷新本页</strong> 以确保 Page Hook 规则同步到页面</li>
     </ol>
     <pre id="load-rules-script"></pre>
-    <button type="button" id="copy-rules">复制加载规则脚本</button>
+    <div class="toolbar">
+      <button type="button" id="copy-rules" class="primary">复制加载规则脚本</button>
+      <button type="button" id="load-and-refresh" class="success">加载规则并刷新</button>
+    </div>
   </section>
 
   <section>
-    <h2>1. 运行测试</h2>
+    <h2>🧪 测试用例</h2>
     <div class="toolbar">
-      <button type="button" class="primary" id="run-all">运行全部</button>
+      <button type="button" class="primary" id="run-all">运行全部测试</button>
       <button type="button" id="clear-results">清空结果</button>
+      <button type="button" id="request-rules">手动请求规则同步</button>
     </div>
     <p class="summary" id="summary">尚未运行</p>
     <div class="grid" id="test-grid"></div>
   </section>
 
   <script>
-    /** 测试用 URL 与规则（单一数据源；均为 jsonplaceholder 真实存在的路径） */
+    // ==================== 测试数据定义 ====================
     const ENDPOINTS = {
-      block: 'https://jsonplaceholder.typicode.com/posts/91',
-      redirect: 'https://jsonplaceholder.typicode.com/posts/92',
+      block: 'https://jsonplaceholder.typicode.com/posts/81',
+      redirect: 'https://jsonplaceholder.typicode.com/posts/82',
       redirectTarget: 'https://jsonplaceholder.typicode.com/posts/1',
-      reqHeaders: 'https://jsonplaceholder.typicode.com/posts/94',
-      respHeaders: 'https://jsonplaceholder.typicode.com/posts/1',
-      body: 'https://jsonplaceholder.typicode.com/posts/93',
-      delay: 'https://jsonplaceholder.typicode.com/users/10',
+      reqHeaders: 'https://httpbin.org/headers',
+      respHeaders: 'https://jsonplaceholder.typicode.com/posts/2',
+      respBody: 'https://jsonplaceholder.typicode.com/posts/84',
+      reqBody: 'https://jsonplaceholder.typicode.com/posts',
+      delay: 'https://jsonplaceholder.typicode.com/users/9',
     }
 
-    const SAMPLE_RULES = [
-      { id: 1, name: 'test-block', enabled: true, condition: { urlPattern: '*://jsonplaceholder.typicode.com/posts/91*' }, action: { type: 'block' } },
-      { id: 2, name: 'test-redirect', enabled: true, condition: { urlPattern: '*://jsonplaceholder.typicode.com/posts/92*' }, action: { type: 'redirect', redirectUrl: ENDPOINTS.redirectTarget } },
-      { id: 3, name: 'test-req-header', enabled: true, condition: { urlPattern: '*://jsonplaceholder.typicode.com/posts/94*' }, action: { type: 'modifyRequestHeaders', headers: [{ name: 'X-Test-Inject', value: 'hello', operation: 'set' }] } },
-      { id: 4, name: 'test-resp-header', enabled: true, condition: { urlPattern: '*://jsonplaceholder.typicode.com/posts/1*' }, action: { type: 'modifyResponseHeaders', headers: [{ name: 'X-Test-Resp', value: 'world', operation: 'set' }] } },
-      { id: 5, name: 'test-body', enabled: true, condition: { urlPattern: '*://jsonplaceholder.typicode.com/posts/93*' }, action: { type: 'modifyResponseBody', body: '{"hacked":true}' } },
-      { id: 6, name: 'test-delay', enabled: true, condition: { urlPattern: '*://jsonplaceholder.typicode.com/users/10*' }, action: { type: 'delay', delayMs: 2000 } },
+    // 完整测试规则（精确匹配，避免相互干扰）
+    const TEST_RULES = [
+      { id: 1, name: 'test-block', enabled: true, condition: { urlPattern: 'https://jsonplaceholder.typicode.com/posts/81', isRegex: false }, action: { type: 'block' } },
+      { id: 2, name: 'test-redirect', enabled: true, condition: { urlPattern: 'https://jsonplaceholder.typicode.com/posts/82', isRegex: false }, action: { type: 'redirect', redirectUrl: ENDPOINTS.redirectTarget } },
+      { id: 3, name: 'test-req-header', enabled: true, condition: { urlPattern: 'https://httpbin.org/headers', isRegex: false }, action: { type: 'modifyRequestHeaders', headers: [{ name: 'X-Test-Req', value: 'hello', operation: 'set' }] } },
+      { id: 4, name: 'test-resp-header', enabled: true, condition: { urlPattern: 'https://jsonplaceholder.typicode.com/posts/2', isRegex: false }, action: { type: 'modifyResponseHeaders', headers: [{ name: 'Content-Language', value: 'x-test-reliable', operation: 'set' }] } },
+      { id: 5, name: 'test-resp-body', enabled: true, condition: { urlPattern: 'https://jsonplaceholder.typicode.com/posts/84', isRegex: false }, action: { type: 'modifyResponseBody', body: '{"hacked":true,"source":"page-hook"}' } },
+      { id: 6, name: 'test-req-body', enabled: true, condition: { urlPattern: 'https://jsonplaceholder.typicode.com/posts', isRegex: false, resourceTypes: ['xmlhttprequest'] }, action: { type: 'modifyRequestBody', body: '{"userId":999,"title":"hacked","body":"from page-hook"}' } },
+      { id: 7, name: 'test-delay', enabled: true, condition: { urlPattern: 'https://jsonplaceholder.typicode.com/users/9', isRegex: false }, action: { type: 'delay', delayMs: 2000 } },
     ]
 
-    const LOAD_RULES_SCRIPT = `chrome.storage.local.set({ rules: ${JSON.stringify(SAMPLE_RULES, null, 2)} })`
+    // Storage 加载脚本（JSON.stringify 方式，匹配 storage.ts）
+    const LOAD_RULES_SCRIPT = `chrome.storage.local.set({
+  rules: JSON.stringify(${JSON.stringify(TEST_RULES, null, 2)}),
+  globalConfig: JSON.stringify({ extensionEnabled: true })
+})`
 
+    // ==================== 测试用例定义 ====================
     const TESTS = [
       {
         id: 'block',
-        title: 'Block',
+        title: '1. Block（阻止请求）',
         channel: 'dnr',
-        expect: 'fetch 失败（Failed to fetch / blocked）',
+        ruleId: 1,
+        expect: 'fetch 应失败（net::ERR_BLOCKED_BY_CLIENT）',
         async run() {
           try {
             await fetch(ENDPOINTS.block)
-            return { ok: false, text: '请求未被拦截，仍成功返回' }
+            return { ok: false, text: '❌ 请求未被拦截，仍成功返回' }
+          } catch (e) {
+            return { ok: true, text: `✅ 请求被阻止: ${e.message}` }
           }
-          catch (e) {
-            return { ok: true, text: String(e.message || e) }
-          }
-        },
+        }
       },
       {
         id: 'redirect',
-        title: 'Redirect',
+        title: '2. Redirect（重定向）',
         channel: 'dnr',
-        expect: `response.url 为 ${ENDPOINTS.redirectTarget}`,
+        ruleId: 2,
+        expect: `response.url 应为 ${ENDPOINTS.redirectTarget}`,
         async run() {
           const res = await fetch(ENDPOINTS.redirect)
           const ok = res.url === ENDPOINTS.redirectTarget
-          return { ok, text: `url = ${res.url}` }
-        },
+          return { ok, text: ok ? `✅ 重定向成功: ${res.url}` : `❌ url = ${res.url}` }
+        }
       },
       {
-        id: 'req-header',
-        title: 'Modify Request Headers',
+        id: 'req-headers',
+        title: '3. Modify Request Headers',
         channel: 'dnr',
-        expect: '请到 Network → posts/94 → Request Headers 查看 X-Test-Inject: hello',
+        ruleId: 3,
+        expect: 'httpbin 回显的 headers 里 X-Test-Req 应为 hello',
         async run() {
           const res = await fetch(ENDPOINTS.reqHeaders)
-          if (!res.ok)
-            return { ok: false, text: `请求失败 status=${res.status}` }
-          return {
-            ok: false,
-            warn: true,
-            text: '请求已发出。请在 Network → posts/94 → Request Headers 确认 X-Test-Inject: hello',
-          }
-        },
+          const json = await res.json()
+          const headers = json.headers || {}
+          console.log('Req Headers', headers)
+          const key = Object.keys(headers).find(k => k.toLowerCase() === 'x-test-req')
+          const value = key ? headers[key] : undefined
+          const ok = value === 'hello'
+          return { ok, text: ok ? `✅ 请求头验证成功: X-Test-Req = ${value}` : `❌ 回显 headers 中未找到预期值，实际: ${JSON.stringify(headers)}` }
+        }
       },
       {
-        id: 'resp-header',
-        title: 'Modify Response Headers',
+        id: 'resp-headers',
+        title: '4. Modify Response Headers',
         channel: 'dnr',
-        expect: 'fetch 读头常为 null；请到 Network → posts/1 → Response Headers 查看 X-Test-Resp: world',
+        ruleId: 4,
+        expect: 'Content-Language 应被 DNR 改写为 x-test-reliable（CORS-safelisted，fetch 可直接可靠读取）',
         async run() {
           const res = await fetch(ENDPOINTS.respHeaders)
-          const header = res.headers.get('X-Test-Resp')
-          const ok = header === 'world'
-          return {
-            ok,
-            warn: !ok,
-            text: header === null
-              ? 'fetch 读不到 X-Test-Resp（CORS 限制），请在 Network 面板确认响应头'
-              : `X-Test-Resp = ${JSON.stringify(header)}`,
+          console.log('Res Headers', [...res.headers.entries()])
+          const header = res.headers.get('Content-Language')
+          if (header === 'x-test-reliable') {
+            return { ok: true, text: `✅ 响应头验证成功: Content-Language = ${header}` }
           }
-        },
+          return { ok: false, text: `❌ Content-Language = ${header}，未按预期修改` }
+        }
       },
       {
-        id: 'body',
-        title: 'Modify Response Body',
-        channel: 'proxy',
-        expect: 'body 为 {"hacked":true}',
+        id: 'resp-body',
+        title: '5. Modify Response Body（Page Hook）',
+        channel: 'page-hook',
+        ruleId: 5,
+        expect: '响应体应为 {"hacked":true,"source":"page-hook"}',
         async run() {
-          const res = await fetch(ENDPOINTS.body)
+          const res = await fetch(ENDPOINTS.respBody)
           const text = await res.text()
-          const ok = text === '{"hacked":true}'
-          return { ok, text: `body = ${text.slice(0, 120)}` }
-        },
+          const ok = text === '{"hacked":true,"source":"page-hook"}'
+          return { ok, text: ok ? `✅ 响应体修改成功: ${text}` : `❌ body = ${text.slice(0, 100)}` }
+        }
+      },
+      {
+        id: 'req-body',
+        title: '6. Modify Request Body（Page Hook）',
+        channel: 'page-hook',
+        ruleId: 6,
+        expect: '发送 POST 请求，响应应包含修改后的请求体内容',
+        async run() {
+          const res = await fetch(ENDPOINTS.reqBody, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ userId: 1, title: 'original', body: 'original body' })
+          })
+          const json = await res.json()
+          // jsonplaceholder 会返回我们发送的内容
+          const ok = json.userId === 999 && json.title === 'hacked'
+          return { ok, text: ok ? `✅ 请求体修改成功: userId=${json.userId}` : `❌ userId=${json.userId}, title=${json.title}` }
+        }
       },
       {
         id: 'delay',
-        title: 'Delay',
-        channel: 'proxy',
-        expect: '耗时 ≥ 2000ms（含网络时间）',
+        title: '7. Delay（Page Hook）',
+        channel: 'page-hook',
+        ruleId: 7,
+        expect: '耗时应 ≥ 2000ms',
         async run() {
           const t0 = Date.now()
           await fetch(ENDPOINTS.delay)
-          const ms = Date.now() - t0
-          const ok = ms >= 2000
-          return { ok, text: `${ms} ms` }
-        },
-      },
+          const elapsed = Date.now() - t0
+          const ok = elapsed >= 2000
+          return { ok, text: ok ? `✅ 延迟成功: ${elapsed} ms` : `❌ 耗时 ${elapsed} ms < 2000ms` }
+        }
+      }
     ]
 
+    // ==================== UI 渲染逻辑 ====================
     document.getElementById('load-rules-script').textContent = LOAD_RULES_SCRIPT
 
     const grid = document.getElementById('test-grid')
@@ -308,7 +346,7 @@
             <span class="card-title">${t.title}</span>
             <span class="badge ${t.channel}">${t.channel === 'dnr' ? 'DNR' : 'Page Hook'}</span>
           </div>
-          <div class="meta">id: ${t.id}</div>
+          ${t.ruleId ? `<div class="meta">规则 ID: ${t.ruleId}</div>` : ''}
           <div class="expect">期望：${t.expect}</div>
           <button type="button" data-run="${t.id}">运行</button>
           <div class="result pending" data-result="${t.id}">等待运行…</div>
@@ -329,37 +367,56 @@
         const { ok, warn, text } = await test.run()
         setResult(test.id, warn ? 'warn' : ok ? 'pass' : 'fail', text)
         return { ok, warn }
-      }
-      catch (e) {
-        setResult(test.id, 'fail', String(e.message || e))
+      } catch (e) {
+        setResult(test.id, 'fail', `❌ 异常: ${e.message}`)
         return { ok: false, warn: false }
       }
     }
 
     async function runAll() {
       summaryEl.textContent = '运行中…'
-      let pass = 0
-      let warn = 0
-      let fail = 0
+      let pass = 0, warn = 0, fail = 0
       for (const test of TESTS) {
         const r = await runTest(test)
         if (r.ok) pass++
         else if (r.warn) warn++
         else fail++
       }
-      summaryEl.textContent = `完成：${pass} 通过，${warn} 需人工确认，${fail} 失败（共 ${TESTS.length} 项）`
+      summaryEl.textContent = `完成：${pass} 通过 / ${warn} 需确认 / ${fail} 失败（共 ${TESTS.length} 项）`
     }
 
+    // ==================== 事件绑定 ====================
     document.getElementById('copy-rules').addEventListener('click', async () => {
       await navigator.clipboard.writeText(LOAD_RULES_SCRIPT)
-      document.getElementById('copy-rules').textContent = '已复制'
-      setTimeout(() => { document.getElementById('copy-rules').textContent = '复制加载规则脚本' }, 2000)
+      const btn = document.getElementById('copy-rules')
+      btn.textContent = '✅ 已复制'
+      setTimeout(() => { btn.textContent = '复制加载规则脚本' }, 2000)
+    })
+
+    document.getElementById('load-and-refresh').addEventListener('click', async () => {
+      try {
+        await chrome.storage.local.set({
+          rules: JSON.stringify(TEST_RULES),
+          globalConfig: JSON.stringify({ extensionEnabled: true })
+        })
+        const btn = document.getElementById('load-and-refresh')
+        btn.textContent = '✅ 规则已加载，即将刷新...'
+        setTimeout(() => location.reload(), 1000)
+      } catch (e) {
+        alert(`加载失败: ${e.message}。请手动在 Service Worker 控制台执行脚本。`)
+      }
     })
 
     document.getElementById('run-all').addEventListener('click', runAll)
+
     document.getElementById('clear-results').addEventListener('click', () => {
       TESTS.forEach(t => setResult(t.id, 'pending', '等待运行…'))
       summaryEl.textContent = '尚未运行'
+    })
+
+    document.getElementById('request-rules').addEventListener('click', () => {
+      window.postMessage({ __type: 'RR_REQUEST_RULES' }, '*')
+      alert('已发送规则同步请求，请等待 1 秒后运行测试')
     })
 
     grid.addEventListener('click', (e) => {
@@ -370,6 +427,11 @@
     })
 
     renderCards()
+
+    // 页面加载时自动请求规则
+    setTimeout(() => {
+      window.postMessage({ __type: 'RR_REQUEST_RULES' }, '*')
+    }, 500)
   </script>
 </body>
 </html>

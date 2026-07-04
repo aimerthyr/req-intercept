@@ -104,9 +104,11 @@ class PatchedXHR extends OriginalXHR {
       const patchedBody = action.body
       this.addEventListener('readystatechange', () => {
         if (this.readyState === 4) {
-          Object.defineProperty(this, 'responseText', { value: patchedBody })
-          Object.defineProperty(this, 'response', { value: patchedBody })
-          Object.defineProperty(this, 'status', { value: 200 })
+          const responseValue = this.responseType === 'json'
+            ? JSON.parse(patchedBody)
+            : patchedBody
+          Object.defineProperty(this, 'responseText', { value: patchedBody, configurable: true })
+          Object.defineProperty(this, 'response', { value: responseValue, configurable: true })
         }
       })
     }

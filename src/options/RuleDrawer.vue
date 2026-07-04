@@ -195,7 +195,7 @@ function removeHeader(index: number) {
               使用正则表达式
             </a-checkbox>
           </a-form-item-rest>
-          <div>默认是通配符模式，*代表任意字符。 *risk/status* 表示匹配包含 risk/status 请求</div>
+          <div>默认是通配符模式，*代表任意字符。*risk/status* 表示匹配包含 risk/status 请求</div>
         </template>
       </a-form-item>
 
@@ -240,7 +240,6 @@ function removeHeader(index: number) {
           placeholder="https://example.com/new-path"
         />
       </a-form-item>
-
       <template
         v-if="formState.actionType === 'modifyRequestHeaders' || formState.actionType === 'modifyResponseHeaders'"
       >
@@ -288,8 +287,13 @@ function removeHeader(index: number) {
             </a-button>
           </div>
           <template #extra>
-            <div style="margin-top: 8px; font-size: 12px; color: #999">
-              操作说明: 设置=覆盖该 header,追加=在现有值后追加,删除=移除该 header
+            <div class="flex  mt-8 gap-8  ">
+              <div>操作说明:</div>
+              <div class="flex flex-col">
+                <div>设置 = 覆盖该 header</div>
+                <div>追加 = 在现有值后追加</div>
+                <div>删除 = 移除该 header</div>
+              </div>
             </div>
           </template>
         </a-form-item>
@@ -311,6 +315,17 @@ function removeHeader(index: number) {
           <JsonEditor v-model="formState.responseBody" />
         </a-form-item>
       </template>
+
+      <a-form-item>
+        <template #label>
+          <div class="text-[#faad14]">
+            温馨提示
+          </div>
+        </template>
+        <div class="h-[32px] flex items-center text-[#faad14]">
+          某些动作类型触发后是无法在 network 面板实时看到变化的
+        </div>
+      </a-form-item>
     </a-form>
 
     <template #footer>
