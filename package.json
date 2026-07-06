@@ -1,7 +1,7 @@
 {
   "name": "req-intercept",
   "displayName": "Req Intercept",
-  "version": "1.0.0",
+  "version": "1.1.0",
   "private": true,
   "packageManager": "pnpm@9.7.1",
   "description": "A browser extension for intercepting, modifying, delaying, and mapping HTTP requests and responses through configurable rules.",
