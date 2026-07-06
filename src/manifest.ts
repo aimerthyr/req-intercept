@@ -45,6 +45,7 @@ export async function getManifest() {
       'activeTab',
       'sidePanel',
       'declarativeNetRequest',
+      'declarativeNetRequestFeedback',
     ],
     host_permissions: ['<all_urls>'],
     content_scripts: [

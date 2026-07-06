@@ -73,5 +73,11 @@ chrome.storage.onChanged.addListener((changes, area) => {
     onRulesChanged()
 })
 
+// 调试 DNR 规则匹配
+chrome.declarativeNetRequest.onRuleMatchedDebug.addListener((info) => {
+  // eslint-disable-next-line no-console
+  console.log('[DNR matched]', info)
+})
+
 // 初始化时编译一次
 onRulesChanged()

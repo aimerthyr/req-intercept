@@ -244,11 +244,11 @@ function removeHeader(index: number) {
         v-if="formState.actionType === 'modifyRequestHeaders' || formState.actionType === 'modifyResponseHeaders'"
       >
         <a-form-item :label="formState.actionType === 'modifyRequestHeaders' ? '请求头' : '响应头'">
-          <div style="display: flex; flex-direction: column; gap: 12px">
+          <div class="flex flex-col gap-12">
             <div
               v-for="(header, index) in formState.headers"
               :key="index"
-              style="display: flex; gap: 8px; align-items: center"
+              class="flex gap-8 items-center"
             >
               <a-input
                 v-model:value="header.name"
@@ -262,7 +262,7 @@ function removeHeader(index: number) {
               />
               <a-select
                 v-model:value="header.operation"
-                style="width: 100px"
+                style="width: 80px"
               >
                 <a-select-option value="set">
                   设置
@@ -276,7 +276,9 @@ function removeHeader(index: number) {
               </a-select>
               <a-button
                 type="text"
+                size="small"
                 danger
+                class="flex items-center"
                 @click="removeHeader(index)"
               >
                 <DeleteOutlined />

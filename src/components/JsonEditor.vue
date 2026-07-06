@@ -38,6 +38,14 @@ onMounted(() => {
       keymap.of([...defaultKeymap, ...historyKeymap, ...foldKeymap]),
       json(),
       EditorView.lineWrapping, // 启用自动换行
+      EditorView.theme({
+        '&.cm-focused .cm-selectionBackground, .cm-selectionBackground': {
+          backgroundColor: '#add6ff !important',
+        },
+        '&.cm-focused .cm-selectionBackground': {
+          backgroundColor: '#add6ff !important',
+        },
+      }),
       EditorView.updateListener.of((update) => {
         if (update.docChanged) {
           emit('update:modelValue', update.state.doc.toString())
@@ -103,10 +111,6 @@ onUnmounted(() => {
 
 .json-editor :deep(.cm-activeLineGutter) {
   background: #e6f7ff;
-}
-
-.json-editor :deep(.cm-activeLine) {
-  background: #f5f5f5;
 }
 
 .json-editor :deep(.cm-foldGutter) {

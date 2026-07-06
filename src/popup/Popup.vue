@@ -92,7 +92,7 @@ const columns: TableProps['columns'] = [
           >
             <template #action>
               <a-button class="flex items-center" type="primary" :icon="h(SettingFilled)" @click="openOptionsPage">
-                设置
+                管理
               </a-button>
             </template>
           </a-alert>
@@ -104,19 +104,23 @@ const columns: TableProps['columns'] = [
             :pagination="false"
             size="small"
             :row-key="(record: Rule) => record.id"
-            :scroll="{ y: 180 }"
+            :scroll="{ y: 200 }"
           >
             <template #bodyCell="{ column, record }">
               <template v-if="column.key === 'enabled'">
-                <a-switch
-                  v-model:checked="record.enabled"
-                  size="small"
-                />
+                <div class="flex items-center">
+                  <a-switch
+                    v-model:checked="record.enabled"
+                    size="small"
+                  />
+                </div>
               </template>
               <template v-else-if="column.key === 'name'">
-                <a-tag :color="record.enabled ? 'success' : 'default'">
-                  {{ record.name }}
-                </a-tag>
+                <div class="flex items-center">
+                  <a-tag class="truncate max-w-[140px]" :color="record.enabled ? 'success' : 'default'">
+                    {{ record.name }}
+                  </a-tag>
+                </div>
               </template>
               <template v-else-if="column.key === 'pattern'">
                 <a-tooltip :title="(record.condition.isRegex ? '正则模式: ' : '通配模式: ') + record.condition.urlPattern">

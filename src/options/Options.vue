@@ -75,7 +75,7 @@ function copyRule(record: Rule) {
           class="pt-[12px]"
           @select="({ key }: { key: any }) => (selectedMenu = key)"
         >
-          <a-menu-item key="rules-list">
+          <a-menu-item key="rules-list" class="my-0!">
             <UnorderedListOutlined />
             <span>规则列表</span>
           </a-menu-item>
@@ -88,7 +88,7 @@ function copyRule(record: Rule) {
             <a-page-header
               title="规则列表"
               sub-title="管理所有请求拦截规则"
-              class="border-b border-gray-200 pb-16 px-24 mb-16"
+              class="border-b border-gray-200 pb-16 px-24"
             >
               <template #extra>
                 <a-button class="flex items-center" type="primary" @click="openAddDrawer">
@@ -98,19 +98,64 @@ function copyRule(record: Rule) {
               </template>
             </a-page-header>
 
+            <!-- TODO: 拖拽排序 -->
+            <!-- <a-card class="mx-24">
+              <div class="flex items-center justify-between gap-8">
+                <div class="flex items-center gap-8">
+                  <div class="w-[100px] text-[14px] font-500">
+                    搜索规则：
+                  </div>
+                  <a-input />
+                </div>
+                <div class="flex items-center">
+                  <a-popover trigger="click" :arrow="false" placement="bottomRight">
+                    <template #content>
+                      <div class="font-500 mb-8">
+                        拖拽调整顺序
+                      </div>
+                      <VueDraggable
+                        v-model="sortedRules"
+                        :animation="150"
+                        handle=".handle"
+                        class="flex flex-col gap-4 max-h-[300px] overflow-y-auto  w-200px  rounded"
+                      >
+                        <div
+                          v-for="(item) in sortedRules"
+                          :key="item.id"
+                          class="h-36px flex-shrink-0 bg-gray-500/5 px-4 gap-8 rounded flex items-center "
+                        >
+                          <Icon :svg="sortSvg" :size="20" class="handle text-gray-500 cursor-move flex-shrink-0" />
+                          <div class="truncate">
+                            {{ item.name }}
+                          </div>
+                        </div>
+                      </VueDraggable>
+                    </template>
+                    <a-button class="flex items-center gap-8 justify-center">
+                      <template #icon>
+                        <Icon :svg="sortSvg" :size="20" />
+                      </template>
+                      排序
+                    </a-button>
+                  </a-popover>
+                </div>
+              </div>
+            </a-card> -->
+
             <a-card class="mx-24">
               <a-table
                 :columns="columns"
                 :data-source="sortedRules"
                 :pagination="{ pageSize: 10, showSizeChanger: true, hideOnSinglePage: true }"
                 :row-key="(record: Rule) => record.id"
+                :scroll="{ y: 480 }"
               >
                 <template #bodyCell="{ column, record }: { column: any, record: any }">
                   <template v-if="column.key === 'enabled'">
                     <a-switch v-model:checked="record.enabled" @change="toggleRule($event as boolean)" />
                   </template>
                   <template v-else-if="column.key === 'name'">
-                    <a-tag :color="record.enabled ? 'green' : 'default'">
+                    <a-tag class="truncate max-w-[150px]" :color="record.enabled ? 'green' : 'default'">
                       {{ record.name }}
                     </a-tag>
                   </template>
