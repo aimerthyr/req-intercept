@@ -1,8 +1,9 @@
 <script setup lang="ts">
 import { h } from 'vue'
 import { EditFilled, SettingFilled } from '@ant-design/icons-vue'
-import type { TableProps } from 'ant-design-vue'
 import { Empty } from 'ant-design-vue'
+import type { VTableColumn } from '@aimerthyr/virtual-table'
+import { VTable } from '@aimerthyr/virtual-table'
 import { globalConfig, rules, sortedRules } from '~/logic/storage'
 import type { Rule } from '~/logic/storage'
 import { getActionLabel, openOptionsPage } from '~/logic'
@@ -17,35 +18,31 @@ const enabledCount = computed(() => {
 })
 
 // 表格列定义
-const columns: TableProps['columns'] = [
+const columns: VTableColumn[] = [
   {
-    title: '状态',
-    dataIndex: 'enabled',
-    key: 'enabled',
-    width: 70,
+    columnHeader: '状态',
+    columnKey: 'enabled',
+    columnWidth: 60,
   },
   {
-    title: '规则名称',
-    dataIndex: 'name',
-    key: 'name',
-    ellipsis: true,
-    width: 160,
+    columnHeader: '规则名称',
+    columnKey: 'name',
+    columnWidth: 160,
   },
   {
-    title: 'URL 模式',
-    key: 'pattern',
-    ellipsis: true,
+    columnHeader: 'URL 模式',
+    columnKey: 'pattern',
   },
   {
-    title: '动作',
-    key: 'action',
-    width: 120,
+    columnHeader: '动作',
+    columnKey: 'action',
+    columnWidth: 120,
   },
   {
-    title: '操作',
-    key: 'edit',
-    width: 70,
-    align: 'center',
+    columnHeader: '操作',
+    columnKey: 'edit',
+    columnWidth: 70,
+    columnAlign: 'center',
   },
 ]
 </script>
@@ -104,56 +101,60 @@ const columns: TableProps['columns'] = [
           </a-alert>
 
           <!-- 规则列表 -->
-          <a-table
+          <VTable
             :columns="columns"
-            :data-source="sortedRules"
-            :pagination="false"
-            size="small"
-            :row-key="(record: Rule) => record.id"
-            :scroll="{ y: 200 }"
+            :data="sortedRules"
+            class="max-h-[280px]"
+            :row-key="(row: Rule) => row.id"
+            :theme-config="{
+              primaryColor: '#9254de',
+              border: {
+                borderStyle: 'dashed',
+              },
+            }"
           >
-            <template #bodyCell="{ column, record }: { column: any, record: any }">
-              <template v-if="column.key === 'enabled'">
+            <template #bodyCell="{ column, row }">
+              <template v-if="column.columnKey === 'enabled'">
                 <div class="flex items-center">
                   <a-switch
-                    v-model:checked="record.enabled"
+                    v-model:checked="row.enabled"
                     size="small"
                   />
                 </div>
               </template>
-              <template v-else-if="column.key === 'name'">
+              <template v-else-if="column.columnKey === 'name'">
                 <div class="flex items-center">
-                  <a-tag class="truncate max-w-[140px]" :color="record.enabled ? 'success' : 'default'">
-                    {{ record.name }}
+                  <a-tag class="truncate max-w-[140px]" :color="row.enabled ? 'success' : 'default'">
+                    {{ row.name }}
                   </a-tag>
                 </div>
               </template>
-              <template v-else-if="column.key === 'pattern'">
-                <a-tooltip :title="(record.condition.isRegex ? '正则模式: ' : '通配模式: ') + record.condition.urlPattern">
+              <template v-else-if="column.columnKey === 'pattern'">
+                <a-tooltip :title="(row.condition.isRegex ? '正则模式: ' : '通配模式: ') + row.condition.urlPattern">
                   <div class="truncate">
-                    {{ record.condition.urlPattern }}
+                    {{ row.condition.urlPattern }}
                   </div>
                 </a-tooltip>
               </template>
-              <template v-else-if="column.key === 'action'">
-                <a-tag :color=" record.enabled ? 'blue' : 'default'">
-                  {{ getActionLabel(record.action) }}
+              <template v-else-if="column.columnKey === 'action'">
+                <a-tag :color=" row.enabled ? 'blue' : 'default'">
+                  {{ getActionLabel(row.action) }}
                 </a-tag>
               </template>
-              <template v-else-if="column.key === 'edit'">
+              <template v-else-if="column.columnKey === 'edit'">
                 <div class="flex justify-center">
                   <a-button
                     type="text"
                     size="small"
-                    class="flex items-center px-0 text-[#9254de]"
-                    @click="editRule(record)"
+                    class="flex items-center px-0 text-[#9254de] hover:!text-[#9254de]"
+                    @click="editRule(row)"
                   >
                     <EditFilled />
                   </a-button>
                 </div>
               </template>
             </template>
-          </a-table>
+          </VTable>
         </div>
       </div>
     </div>

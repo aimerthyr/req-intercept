@@ -8,6 +8,8 @@ import {
   UnorderedListOutlined,
 } from '@ant-design/icons-vue'
 import { message } from 'ant-design-vue'
+import type { VTableColumn } from '@aimerthyr/virtual-table'
+import { VTable } from '@aimerthyr/virtual-table'
 import RuleDrawer from './RuleDrawer.vue'
 import { generateRuleId, rules, rulesReady, sortedRules } from '~/logic/storage'
 import type { Rule } from '~/logic/storage'
@@ -38,12 +40,12 @@ function openEditDrawer(rule: Rule) {
   drawerOpen.value = true
 }
 
-const columns: any[] = [
-  { title: '状态', dataIndex: 'enabled', key: 'enabled', width: 80, align: 'center' },
-  { title: '规则名称', dataIndex: 'name', key: 'name', width: 180 },
-  { title: 'URL 匹配模式', key: 'pattern', ellipsis: true },
-  { title: '动作', key: 'action', width: 200 },
-  { title: '操作', key: 'action-btn', width: 240, align: 'center' },
+const columns: VTableColumn[] = [
+  { columnHeader: '状态', columnKey: 'enabled', columnWidth: 80, columnAlign: 'center' },
+  { columnHeader: '规则名称', columnKey: 'name', columnWidth: 180 },
+  { columnHeader: 'URL 匹配模式', columnKey: 'pattern' },
+  { columnHeader: '动作', columnKey: 'action', columnWidth: 200 },
+  { columnHeader: '操作', columnKey: 'action-btn', columnWidth: 240, columnAlign: 'center' },
 ]
 
 function toggleRule(event: boolean) {
@@ -115,7 +117,7 @@ onMounted(async () => {
 
       <a-layout style="margin-left: 200px">
         <a-layout-content style="min-height: 100vh">
-          <div v-if="selectedMenu === 'rules-list'" class="flex flex-col gap-12 ">
+          <div v-if="selectedMenu === 'rules-list'" class="flex flex-col gap-12 h-full pb-12">
             <a-page-header
               title="规则列表"
               sub-title="管理所有请求拦截规则"
@@ -162,43 +164,61 @@ onMounted(async () => {
               </div>
             </a-card>
 
-            <a-card class="mx-24">
-              <a-table
+            <a-card class="mx-24 flex-1 min-h-0 px-24 pt-16" :body-style="{ padding: '0' }">
+              <VTable
+                :default-pagination="{ pageSize: 10, pageIndex: 1 }"
                 :columns="columns"
-                :data-source="filteredRules"
-                :pagination="{ pageSize: 10, showSizeChanger: true, hideOnSinglePage: true }"
+                :data="filteredRules"
                 :row-key="(record: Rule) => record.id"
-                :scroll="{ y: 480 }"
+                :row-height="40"
+                class="h-full"
+                :theme-config="{
+                  primaryColor: '#9254de',
+                  border: {
+                    borderStyle: 'dashed',
+                  },
+                }"
+                :pagination-config="{
+                  mode: 'client',
+                  enabled: filteredRules.length > 10,
+                  total: filteredRules.length,
+                }"
               >
-                <template #bodyCell="{ column, record }: { column: any, record: any }">
-                  <template v-if="column.key === 'enabled'">
-                    <a-switch v-model:checked="record.enabled" @change="toggleRule($event as boolean)" />
+                <template #bodyCell="{ column, row }">
+                  <template v-if="column.columnKey === 'enabled'">
+                    <a-switch v-model:checked="row.enabled" @change="toggleRule($event as boolean)" />
                   </template>
-                  <template v-else-if="column.key === 'name'">
+                  <template v-else-if="column.columnKey === 'name'">
                     <div class="flex items-center">
-                      <a-tag class="truncate max-w-[150px]" :color="record.enabled ? 'green' : 'default'">
-                        {{ record.name }}
+                      <a-tag class="truncate max-w-[150px]" :color="row.enabled ? 'green' : 'default'">
+                        {{ row.name }}
                       </a-tag>
                     </div>
                   </template>
-                  <template v-else-if="column.key === 'pattern'">
-                    {{ record.condition.urlPattern }}
-                    <a-tag v-if="record.condition.isRegex" color="orange" size="small" style="margin-left: 8px">
-                      正则
+                  <template v-else-if="column.columnKey === 'pattern'">
+                    <div class="flex gap-8 items-center">
+                      <a-tooltip :title="row.condition.urlPattern">
+                        <div class="truncate">
+                          {{ row.condition.urlPattern }}
+                        </div>
+                      </a-tooltip>
+                      <a-tag v-if="row.condition.isRegex" color="orange" size="small" style="margin-left: 8px">
+                        正则
+                      </a-tag>
+                    </div>
+                  </template>
+                  <template v-else-if="column.columnKey === 'action'">
+                    <a-tag :color="row.enabled ? 'blue' : 'default'">
+                      {{ getActionLabel(row.action) }}
                     </a-tag>
                   </template>
-                  <template v-else-if="column.key === 'action'">
-                    <a-tag :color="record.enabled ? 'blue' : 'default'">
-                      {{ getActionLabel(record.action) }}
-                    </a-tag>
-                  </template>
-                  <template v-else-if="column.key === 'action-btn'">
+                  <template v-else-if="column.columnKey === 'action-btn'">
                     <a-space>
-                      <a-button type="primary" class="flex items-center" size="small" @click="openEditDrawer(record)">
+                      <a-button type="primary" class="flex items-center" size="small" @click="openEditDrawer(row)">
                         <EditFilled />
                         编辑
                       </a-button>
-                      <a-button size="small" class="flex items-center" @click="copyRule(record)">
+                      <a-button size="small" class="flex items-center" @click="copyRule(row)">
                         <CopyOutlined />
                         复制
                       </a-button>
@@ -206,7 +226,7 @@ onMounted(async () => {
                         title="确定要删除这条规则吗？"
                         ok-text="确定"
                         cancel-text="取消"
-                        @confirm="deleteRule(record)"
+                        @confirm="deleteRule(row)"
                       >
                         <a-button type="primary" class="flex items-center" danger size="small">
                           <DeleteFilled />
@@ -216,7 +236,7 @@ onMounted(async () => {
                     </a-space>
                   </template>
                 </template>
-              </a-table>
+              </VTable>
             </a-card>
           </div>
         </a-layout-content>

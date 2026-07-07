@@ -32,6 +32,7 @@
     "release": "pnpm run build && pnpm run pack"
   },
   "dependencies": {
+    "@aimerthyr/virtual-table": "^1.5.4",
     "@ant-design/icons-vue": "^7.0.1",
     "@codemirror/commands": "^6.10.4",
     "@codemirror/lang-json": "^6.0.2",

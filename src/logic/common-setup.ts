@@ -1,4 +1,5 @@
 import type { App } from 'vue'
+import '@aimerthyr/virtual-table/virtual-table.css'
 
 export function setupApp(app: App) {
   // Inject a globally available `$app` object in template

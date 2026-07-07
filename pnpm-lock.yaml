@@ -8,6 +8,9 @@ importers:
 
   .:
     dependencies:
+      '@aimerthyr/virtual-table':
+        specifier: ^1.5.4
+        version: 1.5.4(vue@3.5.39(typescript@5.5.4))
       '@ant-design/icons-vue':
         specifier: ^7.0.1
         version: 7.0.1(vue@3.5.39(typescript@5.5.4))
@@ -146,6 +149,11 @@ importers:
         version: 0.12.0
 
 packages:
+
+  '@aimerthyr/virtual-table@1.5.4':
+    resolution: {integrity: sha512-FoILs0ubvhrW46suUOW7UmaH0XYdKVks3t6PImLjzCIJLMw3iwsqALZfFnH7AsWJf0wsvvjetBOF2Phl1yC6FQ==}
+    peerDependencies:
+      vue: ^3.5.0
 
   '@ampproject/remapping@2.3.0':
     resolution: {integrity: sha512-30iZtAPgz+LTIYoeivqYo853f02jBYSd5uGnGpkFV0M3xOt9aN73erkgYAmZU43x4VfqcnLxW9Kpg3R5LC4YYw==}
@@ -752,6 +760,18 @@ packages:
     engines: {node: '>= 18.0'}
     hasBin: true
 
+  '@floating-ui/core@1.7.5':
+    resolution: {integrity: sha512-1Ih4WTWyw0+lKyFMcBHGbb5U5FtuHJuujoyyr5zTaWS5EYMeT6Jb2AuDeftsCsEuchO+mM2ij5+q9crhydzLhQ==}
+
+  '@floating-ui/dom@1.7.6':
+    resolution: {integrity: sha512-9gZSAI5XM36880PPMm//9dfiEngYoC6Am2izES1FF406YFsjvyBMmeJ2g4SAju3xWwtuynNRFL2s9hgxpLI5SQ==}
+
+  '@floating-ui/utils@0.2.11':
+    resolution: {integrity: sha512-RiB/yIh78pcIxl6lLMG0CgBXAZ2Y0eVHqMPYugu+9U0AeT6YBeiJpf7lbdJNIugFP5SIjwNRgo4DhR1Qxi26Gg==}
+
+  '@floating-ui/vue@1.1.11':
+    resolution: {integrity: sha512-HzHKCNVxnGS35r9fCHBc3+uCnjw9IWIlCPL683cGgM9Kgj2BiAl8x1mS7vtvP6F9S/e/q4O6MApwSHj8hNLGfw==}
+
   '@fluent/syntax@0.19.0':
     resolution: {integrity: sha512-5D2qVpZrgpjtqU4eNOcWGp1gnUCgjfM+vKGE2y03kKN6z5EBhtx0qdRFbg8QuNNj8wXNoX93KJoYb+NqoxswmQ==}
     engines: {node: '>=14.0.0', npm: '>=7.0.0'}
@@ -1009,6 +1029,24 @@ packages:
   '@szmarczak/http-timer@5.0.1':
     resolution: {integrity: sha512-+PmQX0PiAYPMeVYe237LJAYvOMYW1j2rH5YROyS3b4CTVJum34HfRvKvAzozHAQG0TnHNdUfY9nCeUyRAs//cw==}
     engines: {node: '>=14.16'}
+
+  '@tanstack/table-core@8.21.3':
+    resolution: {integrity: sha512-ldZXEhOBb8Is7xLs01fR3YEc3DERiz5silj8tnGkFZytt1abEvl/GhUmCE0PMLaMPTa3Jk4HbKmRlHmu+gCftg==}
+    engines: {node: '>=12'}
+
+  '@tanstack/virtual-core@3.17.3':
+    resolution: {integrity: sha512-8Np/TFELpI0ySuJoVmjvOrQYXH/8sTX0Biv9szhFhY39xOdAAY+smrMxjxOum/ux3eM8MUJQsEJ0/R0UpvC8dw==}
+
+  '@tanstack/vue-table@8.21.3':
+    resolution: {integrity: sha512-rusRyd77c5tDPloPskctMyPLFEQUeBzxdQ+2Eow4F7gDPlPOB1UnnhzfpdvqZ8ZyX2rRNGmqNnQWm87OI2OQPw==}
+    engines: {node: '>=12'}
+    peerDependencies:
+      vue: '>=3.2'
+
+  '@tanstack/vue-virtual@3.13.31':
+    resolution: {integrity: sha512-wZMEoSf852jQqaf3Ika1J7PiBae6341LNy/2CxmIyn0XKDQXMuK41wVX+xp6G0yx8jyR95Ef+Tdr13DK7mbJtQ==}
+    peerDependencies:
+      vue: ^2.7.0 || ^3.0.0
 
   '@types/chrome@0.2.0':
     resolution: {integrity: sha512-K/i7EKEVSpmyXXjE0ev5oASWBYMY6yM8LFSutG2PkM1DmxJUggZsoaTc0W1RsVwDDKrsZEjpHFAbqqxlRxGsSg==}
@@ -4789,6 +4827,15 @@ packages:
 
 snapshots:
 
+  '@aimerthyr/virtual-table@1.5.4(vue@3.5.39(typescript@5.5.4))':
+    dependencies:
+      '@floating-ui/vue': 1.1.11(vue@3.5.39(typescript@5.5.4))
+      '@tanstack/vue-table': 8.21.3(vue@3.5.39(typescript@5.5.4))
+      '@tanstack/vue-virtual': 3.13.31(vue@3.5.39(typescript@5.5.4))
+      vue: 3.5.39(typescript@5.5.4)
+    transitivePeerDependencies:
+      - '@vue/composition-api'
+
   '@ampproject/remapping@2.3.0':
     dependencies:
       '@jridgewell/gen-mapping': 0.3.5
@@ -5372,6 +5419,26 @@ snapshots:
     transitivePeerDependencies:
       - typescript
 
+  '@floating-ui/core@1.7.5':
+    dependencies:
+      '@floating-ui/utils': 0.2.11
+
+  '@floating-ui/dom@1.7.6':
+    dependencies:
+      '@floating-ui/core': 1.7.5
+      '@floating-ui/utils': 0.2.11
+
+  '@floating-ui/utils@0.2.11': {}
+
+  '@floating-ui/vue@1.1.11(vue@3.5.39(typescript@5.5.4))':
+    dependencies:
+      '@floating-ui/dom': 1.7.6
+      '@floating-ui/utils': 0.2.11
+      vue-demi: 0.14.10(vue@3.5.39(typescript@5.5.4))
+    transitivePeerDependencies:
+      - '@vue/composition-api'
+      - vue
+
   '@fluent/syntax@0.19.0': {}
 
   '@humanwhocodes/config-array@0.11.14':
@@ -5610,6 +5677,20 @@ snapshots:
   '@szmarczak/http-timer@5.0.1':
     dependencies:
       defer-to-connect: 2.0.1
+
+  '@tanstack/table-core@8.21.3': {}
+
+  '@tanstack/virtual-core@3.17.3': {}
+
+  '@tanstack/vue-table@8.21.3(vue@3.5.39(typescript@5.5.4))':
+    dependencies:
+      '@tanstack/table-core': 8.21.3
+      vue: 3.5.39(typescript@5.5.4)
+
+  '@tanstack/vue-virtual@3.13.31(vue@3.5.39(typescript@5.5.4))':
+    dependencies:
+      '@tanstack/virtual-core': 3.17.3
+      vue: 3.5.39(typescript@5.5.4)
 
   '@types/chrome@0.2.0':
     dependencies:

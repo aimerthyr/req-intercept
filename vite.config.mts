@@ -52,6 +52,14 @@ export const sharedConfig: UserConfig = {
         AntDesignVueResolver({
           importStyle: false, // css in js
         }),
+        (name: string) => {
+          if (name === 'VTable') {
+            return {
+              name: 'VTable',
+              from: '@aimerthyr/virtual-table',
+            }
+          }
+        },
       ],
     }),
 
