@@ -16,7 +16,7 @@ export type RuleAction =
   | { type: 'redirect', redirectUrl: string }
   | { type: 'block' }
   | { type: 'modifyResponseBody', body?: string, status?: number } // 需主世界拦截
-  | { type: 'modifyRequestBody', body: string } // 需主世界拦截
+  | { type: 'modifyRequestBody', body?: string } // 需主世界拦截
   | { type: 'delay', delayMs: number } // 需主世界拦截
 
 export interface Rule {

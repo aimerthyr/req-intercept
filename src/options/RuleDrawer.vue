@@ -37,7 +37,7 @@ const formState = reactive<FormState>({
   delayMs: 2000,
   responseBody: '',
   responseStatus: undefined,
-  requestBody: '{}',
+  requestBody: '',
   redirectUrl: '',
   headers: [],
 })
@@ -65,7 +65,7 @@ onMounted(() => {
     formState.responseStatus = record.action.status
   }
   else if (record.action.type === 'modifyRequestBody') {
-    formState.requestBody = record.action.body
+    formState.requestBody = record.action.body ?? ''
   }
   else if (record.action.type === 'modifyRequestHeaders' || record.action.type === 'modifyResponseHeaders') {
     formState.headers = record.action.headers.map(h => ({
@@ -123,7 +123,11 @@ async function handleOk() {
       }
     }
     else if (formState.actionType === 'modifyRequestBody') {
-      action = { type: 'modifyRequestBody', body: formState.requestBody }
+      const hasBody = formState.requestBody.trim() !== ''
+      action = {
+        type: 'modifyRequestBody',
+        ...(hasBody && { body: formState.requestBody }),
+      }
     }
     else if (formState.actionType === 'modifyRequestHeaders') {
       action = { type: 'modifyRequestHeaders', headers: getValidHeaders() }
@@ -348,7 +352,7 @@ function removeHeader(index: number) {
           <JsonEditor v-model="formState.requestBody" />
           <template #extra>
             <div style="margin-top: 8px; font-size: 12px; color: #999">
-              拦截并修改发送到服务器的请求体
+              留空则保持原请求体
             </div>
           </template>
         </a-form-item>

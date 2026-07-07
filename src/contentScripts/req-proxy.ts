@@ -37,7 +37,7 @@ window.fetch = async function (input: RequestInfo | URL, init?: RequestInit) {
   }
 
   // 修改请求体
-  if (action?.type === 'modifyRequestBody') {
+  if (action?.type === 'modifyRequestBody' && action.body !== undefined) {
     const headers = new Headers(init?.headers)
     const modifiedInit: RequestInit = {
       ...init,
@@ -89,7 +89,7 @@ class PatchedXHR extends OriginalXHR {
     }
 
     // 修改请求体
-    if (action?.type === 'modifyRequestBody') {
+    if (action?.type === 'modifyRequestBody' && action.body !== undefined) {
       return super.send(action.body)
     }
 
