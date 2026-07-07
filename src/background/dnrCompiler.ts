@@ -1,4 +1,5 @@
 import type { HeaderOp, Rule } from './rule'
+import { wildcardToRegexSource } from '~/logic/url-match'
 
 function toHeaderInfo(ops: HeaderOp[]): chrome.declarativeNetRequest.ModifyHeaderInfo[] | null {
   const items = ops
@@ -12,9 +13,14 @@ function toHeaderInfo(ops: HeaderOp[]): chrome.declarativeNetRequest.ModifyHeade
 }
 
 function toDnrRule(rule: Rule): chrome.declarativeNetRequest.Rule | null {
-  const condition: chrome.declarativeNetRequest.RuleCondition = rule.condition.isRegex
-    ? { regexFilter: rule.condition.urlPattern, resourceTypes: rule.condition.resourceTypes }
-    : { urlFilter: rule.condition.urlPattern, resourceTypes: rule.condition.resourceTypes }
+  const regexFilter = rule.condition.isRegex
+    ? rule.condition.urlPattern
+    : wildcardToRegexSource(rule.condition.urlPattern)
+  const condition: chrome.declarativeNetRequest.RuleCondition = {
+    regexFilter,
+    isUrlFilterCaseSensitive: false,
+    resourceTypes: rule.condition.resourceTypes,
+  }
 
   switch (rule.action.type) {
     case 'block':

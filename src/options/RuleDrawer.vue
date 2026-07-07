@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { DeleteOutlined, PlusOutlined } from '@ant-design/icons-vue'
+import { DeleteOutlined, PlusOutlined, QuestionCircleOutlined } from '@ant-design/icons-vue'
 import { message } from 'ant-design-vue'
 import type { FormInstance } from 'ant-design-vue'
 import JsonEditor from '~/components/JsonEditor.vue'
@@ -19,6 +19,7 @@ interface FormState {
   actionType: Rule['action']['type']
   delayMs: number
   responseBody: string
+  responseStatus?: number
   requestBody: string
   redirectUrl: string
   headers: Array<{ name: string, value: string, operation: 'set' | 'remove' | 'append' }>
@@ -34,7 +35,8 @@ const formState = reactive<FormState>({
   isRegex: false,
   actionType: 'delay',
   delayMs: 2000,
-  responseBody: '{}',
+  responseBody: '',
+  responseStatus: undefined,
   requestBody: '{}',
   redirectUrl: '',
   headers: [],
@@ -59,7 +61,8 @@ onMounted(() => {
     formState.delayMs = record.action.delayMs
   }
   else if (record.action.type === 'modifyResponseBody') {
-    formState.responseBody = record.action.body
+    formState.responseBody = record.action.body ?? ''
+    formState.responseStatus = record.action.status
   }
   else if (record.action.type === 'modifyRequestBody') {
     formState.requestBody = record.action.body
@@ -109,7 +112,15 @@ async function handleOk() {
       action = { type: 'block' }
     }
     else if (formState.actionType === 'modifyResponseBody') {
-      action = { type: 'modifyResponseBody', body: formState.responseBody }
+      const hasBody = formState.responseBody.trim() !== ''
+      const hasStatus = formState.responseStatus != null
+      if (!hasBody && !hasStatus)
+        throw new Error('请填写响应内容或状态码')
+      action = {
+        type: 'modifyResponseBody',
+        ...(hasBody && { body: formState.responseBody }),
+        ...(hasStatus && { status: formState.responseStatus }),
+      }
     }
     else if (formState.actionType === 'modifyRequestBody') {
       action = { type: 'modifyRequestBody', body: formState.requestBody }
@@ -188,14 +199,45 @@ function removeHeader(index: number) {
       </a-form-item>
 
       <a-form-item label="URL 模式" name="urlPattern">
-        <a-input v-model:value="formState.urlPattern" placeholder="*://api.example.com/*" />
+        <a-input v-model:value="formState.urlPattern" placeholder="risk/status" />
         <template #extra>
           <a-form-item-rest>
-            <a-checkbox v-model:checked="formState.isRegex" class="mt-8">
-              使用正则表达式
-            </a-checkbox>
+            <div class="flex items-center  mt-8">
+              <a-checkbox v-model:checked="formState.isRegex">
+                使用正则表达式
+              </a-checkbox>
+              <a-popover placement="bottomLeft" :overlay-style="{ maxWidth: '420px' }">
+                <template #content>
+                  <div class="flex flex-col gap-8">
+                    <div class="flex flex-col gap-4">
+                      <div class="font-500">
+                        一、默认模式（子串匹配）
+                      </div>
+                      <div class="pl-16" style="text-indent: -16px">
+                        1. 只要请求 URL 中包含填写的内容即算命中，例如填写 risk/status，可匹配 https://api.example.com/risk/status?id=1。
+                      </div>
+                      <div class="pl-16" style="text-indent: -16px">
+                        2. * 表示通配符，代表任意字符，其余字符按字面量处理，无需手动转义。例如填写 api.example.com/*/risk/status，可同时匹配 api.example.com/v1/risk/status 和 api.example.com/v2/risk/status，但要求域名和 risk/status 都必须出现。
+                      </div>
+                    </div>
+
+                    <div class="flex flex-col gap-4">
+                      <div class="font-500">
+                        二、正则表达式模式
+                      </div>
+                      <div class="pl-16" style="text-indent: -16px">
+                        1. 勾选"使用正则表达式"后生效，如需按正则规则匹配（如数字范围、捕获组等）可使用此模式，例如填写 risk/status/\d+，可匹配 .../risk/status/123，但不匹配 .../risk/status/abc。
+                      </div>
+                      <div class="pl-16" style="text-indent: -16px">
+                        2. 输入内容将被当作正则源码原样使用，需自行处理转义，例如域名中的 . 需写成 \.，即 api\.example\.com，否则 . 会被当作"任意字符"而非字面量的点。
+                      </div>
+                    </div>
+                  </div>
+                </template>
+                <QuestionCircleOutlined class="text-[#faad14] cursor-pointer" />
+              </a-popover>
+            </div>
           </a-form-item-rest>
-          <div>默认是通配符模式，*代表任意字符。*risk/status* 表示匹配包含 risk/status 请求</div>
         </template>
       </a-form-item>
 
@@ -315,6 +357,20 @@ function removeHeader(index: number) {
       <template v-if="formState.actionType === 'modifyResponseBody'">
         <a-form-item label="响应内容">
           <JsonEditor v-model="formState.responseBody" />
+          <template #extra>
+            <div style="margin-top: 8px; font-size: 12px; color: #999">
+              留空则保持原响应体
+            </div>
+          </template>
+        </a-form-item>
+        <a-form-item label="状态码">
+          <a-input-number
+            v-model:value="formState.responseStatus"
+            :min="100"
+            :max="599"
+            placeholder="留空则保持原状态码"
+            style="width: 100%"
+          />
         </a-form-item>
       </template>
 

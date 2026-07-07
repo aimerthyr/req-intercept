@@ -15,7 +15,7 @@ export type RuleAction =
   | { type: 'modifyResponseHeaders', headers: HeaderOp[] }
   | { type: 'redirect', redirectUrl: string }
   | { type: 'block' }
-  | { type: 'modifyResponseBody', body: string } // 需主世界拦截
+  | { type: 'modifyResponseBody', body?: string, status?: number } // 需主世界拦截
   | { type: 'modifyRequestBody', body: string } // 需主世界拦截
   | { type: 'delay', delayMs: number } // 需主世界拦截
 

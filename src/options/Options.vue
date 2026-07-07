@@ -2,6 +2,7 @@
 import {
   CopyOutlined,
   DeleteFilled,
+  DeleteOutlined,
   EditFilled,
   PlusOutlined,
   UnorderedListOutlined,
@@ -15,6 +16,17 @@ import { getActionLabel } from '~/logic'
 const selectedMenu = ref('rules-list')
 const drawerOpen = ref(false)
 const editingRule = ref<Rule | null>(null)
+const searchKeyword = ref('')
+const enabledCount = computed(() => rules.value.filter(r => r.enabled).length)
+const filteredRules = computed(() => {
+  const keyword = searchKeyword.value.trim().toLowerCase()
+  if (!keyword)
+    return sortedRules.value
+  return sortedRules.value.filter(r =>
+    r.name.toLowerCase().includes(keyword)
+    || r.condition.urlPattern.toLowerCase().includes(keyword),
+  )
+})
 
 function openAddDrawer() {
   editingRule.value = null
@@ -52,6 +64,12 @@ function copyRule(record: Rule) {
   }
   rules.value.push(newRule)
   message.success('规则复制成功')
+}
+
+function deleteAll() {
+  rules.value = []
+  searchKeyword.value = ''
+  message.success('已删除所有规则')
 }
 </script>
 
@@ -98,54 +116,42 @@ function copyRule(record: Rule) {
               </template>
             </a-page-header>
 
-            <!-- TODO: 拖拽排序 -->
-            <!-- <a-card class="mx-24">
-              <div class="flex items-center justify-between gap-8">
-                <div class="flex items-center gap-8">
-                  <div class="w-[100px] text-[14px] font-500">
-                    搜索规则：
-                  </div>
-                  <a-input />
+            <a-card class="mx-24" :body-style="{ padding: '16px 24px' }">
+              <div class="flex flex-wrap items-center gap-16">
+                <div class="flex items-center gap-12 shrink-0">
+                  <a-statistic title="规则总数" :value="rules.length" />
+                  <a-divider type="vertical" class="h-[40px]" />
+                  <a-statistic title="已启用" :value="enabledCount" :value-style="{ color: '#52c41a' }" />
                 </div>
-                <div class="flex items-center">
-                  <a-popover trigger="click" :arrow="false" placement="bottomRight">
-                    <template #content>
-                      <div class="font-500 mb-8">
-                        拖拽调整顺序
-                      </div>
-                      <VueDraggable
-                        v-model="sortedRules"
-                        :animation="150"
-                        handle=".handle"
-                        class="flex flex-col gap-4 max-h-[300px] overflow-y-auto  w-200px  rounded"
-                      >
-                        <div
-                          v-for="(item) in sortedRules"
-                          :key="item.id"
-                          class="h-36px flex-shrink-0 bg-gray-500/5 px-4 gap-8 rounded flex items-center "
-                        >
-                          <Icon :svg="sortSvg" :size="20" class="handle text-gray-500 cursor-move flex-shrink-0" />
-                          <div class="truncate">
-                            {{ item.name }}
-                          </div>
-                        </div>
-                      </VueDraggable>
-                    </template>
-                    <a-button class="flex items-center gap-8 justify-center">
-                      <template #icon>
-                        <Icon :svg="sortSvg" :size="20" />
-                      </template>
-                      排序
+
+                <a-input-search
+                  v-model:value="searchKeyword"
+                  allow-clear
+                  placeholder="搜索规则名称或 URL 模式"
+                  class="max-w-[400px]"
+                />
+
+                <div class="flex flex-wrap items-center gap-8 shrink-0 ml-auto">
+                  <a-popconfirm
+                    title="确定删除所有规则吗？此操作不可恢复"
+                    ok-text="确定"
+                    cancel-text="取消"
+                    :disabled="!rules.length"
+                    @confirm="deleteAll"
+                  >
+                    <a-button class="flex items-center" danger :disabled="!rules.length">
+                      <DeleteOutlined />
+                      清空
                     </a-button>
-                  </a-popover>
+                  </a-popconfirm>
                 </div>
               </div>
-            </a-card> -->
+            </a-card>
 
             <a-card class="mx-24">
               <a-table
                 :columns="columns"
-                :data-source="sortedRules"
+                :data-source="filteredRules"
                 :pagination="{ pageSize: 10, showSizeChanger: true, hideOnSinglePage: true }"
                 :row-key="(record: Rule) => record.id"
                 :scroll="{ y: 480 }"
@@ -155,9 +161,11 @@ function copyRule(record: Rule) {
                     <a-switch v-model:checked="record.enabled" @change="toggleRule($event as boolean)" />
                   </template>
                   <template v-else-if="column.key === 'name'">
-                    <a-tag class="truncate max-w-[150px]" :color="record.enabled ? 'green' : 'default'">
-                      {{ record.name }}
-                    </a-tag>
+                    <div class="flex items-center">
+                      <a-tag class="truncate max-w-[150px]" :color="record.enabled ? 'green' : 'default'">
+                        {{ record.name }}
+                      </a-tag>
+                    </div>
                   </template>
                   <template v-else-if="column.key === 'pattern'">
                     {{ record.condition.urlPattern }}
@@ -220,5 +228,8 @@ function copyRule(record: Rule) {
   color: #9254de;
   border-bottom: 1px solid #f0f0f0;
   padding: 13px 0;
+}
+:deep(.ant-input-search .anticon-search svg) {
+  display: block;
 }
 </style>

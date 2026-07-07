@@ -1,3 +1,4 @@
+import { matchUrl } from '~/logic/url-match'
 import type { PageHookRule } from '~/shared/rule'
 
 /**
@@ -10,13 +11,6 @@ window.addEventListener('message', (e) => {
     return
   activeRules = e.data.rules
 })
-
-function matchUrl(pattern: string, isRegex: boolean | undefined, url: string): boolean {
-  if (isRegex)
-    return new RegExp(pattern).test(url)
-  const escaped = pattern.replace(/[.+?^${}()|[\]\\]/g, '\\$&').replace(/\*/g, '.*')
-  return new RegExp(`^${escaped}$`).test(url)
-}
 
 function findHit(url: string) {
   return activeRules.find(r => r.enabled && matchUrl(r.condition.urlPattern, r.condition.isRegex, url))
@@ -55,14 +49,14 @@ window.fetch = async function (input: RequestInfo | URL, init?: RequestInit) {
 
   const response = await originalFetch(input, init)
 
-  // 修改响应体
   if (action?.type === 'modifyResponseBody') {
-    return new Response(action.body, {
-      status: response.status,
+    return new Response(action.body ?? response.body, {
+      status: action.status ?? response.status,
       statusText: response.statusText,
       headers: response.headers,
     })
   }
+
   return response
 }
 
@@ -99,16 +93,21 @@ class PatchedXHR extends OriginalXHR {
       return super.send(action.body)
     }
 
-    // 修改响应体
     if (action?.type === 'modifyResponseBody') {
       const patchedBody = action.body
+      const patchedStatus = action.status
       this.addEventListener('readystatechange', () => {
         if (this.readyState === 4) {
-          const responseValue = this.responseType === 'json'
-            ? JSON.parse(patchedBody)
-            : patchedBody
-          Object.defineProperty(this, 'responseText', { value: patchedBody, configurable: true })
-          Object.defineProperty(this, 'response', { value: responseValue, configurable: true })
+          if (patchedBody !== undefined) {
+            const responseValue = this.responseType === 'json'
+              ? JSON.parse(patchedBody)
+              : patchedBody
+            Object.defineProperty(this, 'responseText', { value: patchedBody, configurable: true })
+            Object.defineProperty(this, 'response', { value: responseValue, configurable: true })
+          }
+          if (patchedStatus !== undefined) {
+            Object.defineProperty(this, 'status', { value: patchedStatus, configurable: true })
+          }
         }
       })
     }
