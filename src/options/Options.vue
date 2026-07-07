@@ -9,9 +9,9 @@ import {
 } from '@ant-design/icons-vue'
 import { message } from 'ant-design-vue'
 import RuleDrawer from './RuleDrawer.vue'
-import { generateRuleId, rules, sortedRules } from '~/logic/storage'
+import { generateRuleId, rules, rulesReady, sortedRules } from '~/logic/storage'
 import type { Rule } from '~/logic/storage'
-import { getActionLabel } from '~/logic'
+import { clearEditRuleIdFromUrl, getActionLabel, parseEditRuleIdFromUrl } from '~/logic'
 
 const selectedMenu = ref('rules-list')
 const drawerOpen = ref(false)
@@ -71,6 +71,19 @@ function deleteAll() {
   searchKeyword.value = ''
   message.success('已删除所有规则')
 }
+
+onMounted(async () => {
+  const editRuleId = parseEditRuleIdFromUrl()
+  if (editRuleId == null)
+    return
+
+  await rulesReady
+  const rule = rules.value.find(r => r.id === editRuleId)
+  if (rule)
+    openEditDrawer(rule)
+
+  clearEditRuleIdFromUrl()
+})
 </script>
 
 <template>
@@ -137,6 +150,7 @@ function deleteAll() {
                     ok-text="确定"
                     cancel-text="取消"
                     :disabled="!rules.length"
+                    placement="topRight"
                     @confirm="deleteAll"
                   >
                     <a-button class="flex items-center" danger :disabled="!rules.length">

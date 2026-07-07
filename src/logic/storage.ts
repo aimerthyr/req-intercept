@@ -17,7 +17,7 @@ export function generateRuleId(existingRules: Rule[]): number {
   return maxId + 1
 }
 
-export const { data: rules } = useWebExtensionStorage<Rule[]>(
+export const { data: rules, dataReady: rulesReady } = useWebExtensionStorage<Rule[]>(
   'rules',
   [
     {

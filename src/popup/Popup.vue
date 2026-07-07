@@ -1,14 +1,14 @@
 <script setup lang="ts">
 import { h } from 'vue'
-import { SettingFilled } from '@ant-design/icons-vue'
+import { EditFilled, SettingFilled } from '@ant-design/icons-vue'
 import type { TableProps } from 'ant-design-vue'
 import { Empty } from 'ant-design-vue'
 import { globalConfig, rules, sortedRules } from '~/logic/storage'
 import type { Rule } from '~/logic/storage'
-import { getActionLabel } from '~/logic'
+import { getActionLabel, openOptionsPage } from '~/logic'
 
-function openOptionsPage() {
-  browser.runtime.openOptionsPage()
+function editRule(rule: Rule) {
+  openOptionsPage(rule.id)
 }
 
 // 启用规则数量
@@ -40,6 +40,12 @@ const columns: TableProps['columns'] = [
     title: '动作',
     key: 'action',
     width: 120,
+  },
+  {
+    title: '操作',
+    key: 'edit',
+    width: 70,
+    align: 'center',
   },
 ]
 </script>
@@ -77,7 +83,7 @@ const columns: TableProps['columns'] = [
           :image="Empty.PRESENTED_IMAGE_SIMPLE"
           description="暂无规则"
         >
-          <a-button type="primary" size="small" @click="openOptionsPage">
+          <a-button type="primary" size="small" @click="() => openOptionsPage()">
             立即添加
           </a-button>
         </a-empty>
@@ -91,7 +97,7 @@ const columns: TableProps['columns'] = [
             class="mb-12"
           >
             <template #action>
-              <a-button class="flex items-center" type="primary" :icon="h(SettingFilled)" @click="openOptionsPage">
+              <a-button class="flex items-center" type="primary" :icon="h(SettingFilled)" @click="() => openOptionsPage()">
                 管理
               </a-button>
             </template>
@@ -106,7 +112,7 @@ const columns: TableProps['columns'] = [
             :row-key="(record: Rule) => record.id"
             :scroll="{ y: 200 }"
           >
-            <template #bodyCell="{ column, record }">
+            <template #bodyCell="{ column, record }: { column: any, record: any }">
               <template v-if="column.key === 'enabled'">
                 <div class="flex items-center">
                   <a-switch
@@ -124,13 +130,27 @@ const columns: TableProps['columns'] = [
               </template>
               <template v-else-if="column.key === 'pattern'">
                 <a-tooltip :title="(record.condition.isRegex ? '正则模式: ' : '通配模式: ') + record.condition.urlPattern">
-                  {{ record.condition.urlPattern }}
+                  <div class="truncate">
+                    {{ record.condition.urlPattern }}
+                  </div>
                 </a-tooltip>
               </template>
               <template v-else-if="column.key === 'action'">
                 <a-tag :color=" record.enabled ? 'blue' : 'default'">
                   {{ getActionLabel(record.action) }}
                 </a-tag>
+              </template>
+              <template v-else-if="column.key === 'edit'">
+                <div class="flex justify-center">
+                  <a-button
+                    type="text"
+                    size="small"
+                    class="flex items-center px-0 text-[#9254de]"
+                    @click="editRule(record)"
+                  >
+                    <EditFilled />
+                  </a-button>
+                </div>
               </template>
             </template>
           </a-table>

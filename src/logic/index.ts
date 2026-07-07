@@ -1,6 +1,7 @@
 import type { Rule } from './storage'
 
 export * from './storage'
+export * from './open-options'
 
 export function getActionLabel(action: Rule['action']) {
   const labels = {
