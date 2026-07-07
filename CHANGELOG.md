@@ -1,5 +1,13 @@
 # Changelog
 
+## [1.3.0] - 2027-07-07
+
+### Features
+- 支持修改请求体内容
+
+### Style
+- a-table 替换为 @aimerthyr/virtual-table
+
 ## [1.2.0] - 2027-07-07
 
 ### Features
