@@ -190,9 +190,11 @@ onMounted(async () => {
                   </template>
                   <template v-else-if="column.columnKey === 'name'">
                     <div class="flex items-center">
-                      <a-tag class="truncate max-w-[150px]" :color="row.enabled ? 'green' : 'default'">
-                        {{ row.name }}
-                      </a-tag>
+                      <a-tooltip :title="row.name">
+                        <a-tag class="truncate max-w-[150px]" :color="row.enabled ? 'green' : 'default'">
+                          {{ row.name }}
+                        </a-tag>
+                      </a-tooltip>
                     </div>
                   </template>
                   <template v-else-if="column.columnKey === 'pattern'">

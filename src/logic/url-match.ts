@@ -13,5 +13,11 @@ export function wildcardToRegexSource(pattern: string): string {
  */
 export function matchUrl(pattern: string, isRegex: boolean | undefined, url: string): boolean {
   const source = isRegex ? pattern : wildcardToRegexSource(pattern)
-  return new RegExp(source, 'i').test(url)
+  try {
+    return new RegExp(source, 'i').test(url)
+  }
+  catch (error) {
+    console.error('正则表达式非法,该规则将被视为不命中:', pattern, error)
+    return false
+  }
 }
