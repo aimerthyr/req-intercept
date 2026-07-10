@@ -11,6 +11,7 @@ import { message } from 'ant-design-vue'
 import type { VTableColumn } from '@aimerthyr/virtual-table'
 import { VTable } from '@aimerthyr/virtual-table'
 import RuleDrawer from './RuleDrawer.vue'
+import RulesBackup from './RulesBackup.vue'
 import { generateRuleId, rules, rulesReady, sortedRules } from '~/logic/storage'
 import type { Rule } from '~/logic/storage'
 import { clearEditRuleIdFromUrl, getActionLabel, parseEditRuleIdFromUrl } from '~/logic'
@@ -124,10 +125,13 @@ onMounted(async () => {
               class="border-b border-gray-200 pb-16 px-24"
             >
               <template #extra>
-                <a-button class="flex items-center" type="primary" @click="openAddDrawer">
-                  <PlusOutlined />
-                  新增规则
-                </a-button>
+                <a-space>
+                  <RulesBackup @imported="searchKeyword = ''" />
+                  <a-button class="flex items-center" type="primary" @click="openAddDrawer">
+                    <PlusOutlined />
+                    新增规则
+                  </a-button>
+                </a-space>
               </template>
             </a-page-header>
 
