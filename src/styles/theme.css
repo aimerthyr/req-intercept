@@ -1,0 +1,14 @@
+:root {
+  --ri-primary: #9254de;
+  --ri-primary-dark: #722ed1;
+  --ri-primary-darker: #531dab;
+  --ri-primary-bg: #f9f0ff;
+  --ri-primary-bg-strong: #efdbff;
+  --ri-primary-border: #d3adf7;
+  --ri-hero-gradient: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  --ri-surface-gradient: linear-gradient(135deg, #f9f0ff 0%, #efdbff 100%);
+  --ri-page-bg: #f5f3f9;
+  --ri-radius-lg: 12px;
+  --ri-radius-md: 10px;
+  --ri-shadow: 0 8px 24px rgb(146 84 222 / 8%);
+}

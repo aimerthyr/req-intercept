@@ -186,212 +186,234 @@ function removeHeader(index: number) {
 <template>
   <a-drawer
     :open="open"
-    :title="drawerTitle"
     :width="720"
     placement="right"
+    class="rule-drawer"
+    :header-style="{ borderBottom: '1px solid #f0f0f0', padding: '16px 24px' }"
+    :body-style="{ padding: '20px 24px 24px', background: '#fafafa' }"
+    :footer-style="{ borderTop: '1px solid #f0f0f0', padding: '12px 24px', background: '#fff' }"
     @close="open = false"
   >
+    <template #title>
+      <div class="drawer-title">
+        <div class="drawer-title__main">
+          {{ drawerTitle }}
+        </div>
+        <div class="drawer-title__sub">
+          {{ isEditing ? '修改已有规则的匹配条件与动作' : '填写规则信息并选择拦截动作' }}
+        </div>
+      </div>
+    </template>
+
     <a-form
       ref="formRef"
+      class="rule-form"
       :model="formState"
       :rules="formRules"
       :label-col="{ span: 4 }"
       :wrapper-col="{ span: 20 }"
     >
-      <a-form-item label="规则名称" name="name">
-        <a-input v-model:value="formState.name" placeholder="例如:拦截 API 请求" />
-      </a-form-item>
+      <section class="form-section">
+        <div class="form-section__title">
+          基础信息
+        </div>
+        <div class="form-section__body">
+          <a-form-item label="规则名称" name="name">
+            <a-input v-model:value="formState.name" placeholder="例如:拦截 API 请求" />
+          </a-form-item>
 
-      <a-form-item label="URL 模式" name="urlPattern">
-        <a-input v-model:value="formState.urlPattern" placeholder="risk/status" />
-        <template #extra>
-          <a-form-item-rest>
-            <div class="flex items-center  mt-8">
-              <a-checkbox v-model:checked="formState.isRegex">
-                使用正则表达式
-              </a-checkbox>
-              <a-popover placement="bottomLeft" :overlay-style="{ maxWidth: '420px' }">
-                <template #content>
-                  <div class="flex flex-col gap-8">
-                    <div class="flex flex-col gap-4">
-                      <div class="font-500">
-                        一、默认模式（子串匹配）
-                      </div>
-                      <div class="pl-16" style="text-indent: -16px">
-                        1. 只要请求 URL 中包含填写的内容即算命中，例如填写 risk/status，可匹配 https://api.example.com/risk/status?id=1。
-                      </div>
-                      <div class="pl-16" style="text-indent: -16px">
-                        2. * 表示通配符，代表任意字符，其余字符按字面量处理，无需手动转义。例如填写 api.example.com/*/risk/status，可同时匹配 api.example.com/v1/risk/status 和 api.example.com/v2/risk/status，但要求域名和 risk/status 都必须出现。
-                      </div>
-                    </div>
+          <a-form-item label="URL 模式" name="urlPattern">
+            <a-input v-model:value="formState.urlPattern" placeholder="risk/status" />
+            <template #extra>
+              <a-form-item-rest>
+                <div class="flex items-center mt-8">
+                  <a-checkbox v-model:checked="formState.isRegex">
+                    使用正则表达式
+                  </a-checkbox>
+                  <a-popover placement="bottomLeft" :overlay-style="{ maxWidth: '420px' }">
+                    <template #content>
+                      <div class="flex flex-col gap-8">
+                        <div class="flex flex-col gap-4">
+                          <div class="font-500">
+                            一、默认模式（子串匹配）
+                          </div>
+                          <div class="pl-16" style="text-indent: -16px">
+                            1. 只要请求 URL 中包含填写的内容即算命中，例如填写 risk/status，可匹配 https://api.example.com/risk/status?id=1。
+                          </div>
+                          <div class="pl-16" style="text-indent: -16px">
+                            2. * 表示通配符，代表任意字符，其余字符按字面量处理，无需手动转义。例如填写 api.example.com/*/risk/status，可同时匹配 api.example.com/v1/risk/status 和 api.example.com/v2/risk/status，但要求域名和 risk/status 都必须出现。
+                          </div>
+                        </div>
 
-                    <div class="flex flex-col gap-4">
-                      <div class="font-500">
-                        二、正则表达式模式
+                        <div class="flex flex-col gap-4">
+                          <div class="font-500">
+                            二、正则表达式模式
+                          </div>
+                          <div class="pl-16" style="text-indent: -16px">
+                            1. 勾选"使用正则表达式"后生效，如需按正则规则匹配（如数字范围、捕获组等）可使用此模式，例如填写 risk/status/\d+，可匹配 .../risk/status/123，但不匹配 .../risk/status/abc。
+                          </div>
+                          <div class="pl-16" style="text-indent: -16px">
+                            2. 输入内容将被当作正则源码原样使用，需自行处理转义，例如域名中的 . 需写成 \.，即 api\.example\.com，否则 . 会被当作"任意字符"而非字面量的点。
+                          </div>
+                        </div>
                       </div>
-                      <div class="pl-16" style="text-indent: -16px">
-                        1. 勾选"使用正则表达式"后生效，如需按正则规则匹配（如数字范围、捕获组等）可使用此模式，例如填写 risk/status/\d+，可匹配 .../risk/status/123，但不匹配 .../risk/status/abc。
-                      </div>
-                      <div class="pl-16" style="text-indent: -16px">
-                        2. 输入内容将被当作正则源码原样使用，需自行处理转义，例如域名中的 . 需写成 \.，即 api\.example\.com，否则 . 会被当作"任意字符"而非字面量的点。
-                      </div>
-                    </div>
-                  </div>
-                </template>
-                <QuestionCircleOutlined class="text-[#faad14] cursor-pointer" />
-              </a-popover>
-            </div>
-          </a-form-item-rest>
-        </template>
-      </a-form-item>
+                    </template>
+                    <QuestionCircleOutlined class="text-[#faad14] cursor-pointer" />
+                  </a-popover>
+                </div>
+              </a-form-item-rest>
+            </template>
+          </a-form-item>
+        </div>
+      </section>
 
-      <a-form-item label="动作类型" name="actionType">
-        <a-select v-model:value="formState.actionType">
-          <a-select-option value="modifyResponseBody">
-            修改响应体
-          </a-select-option>
-          <a-select-option value="modifyRequestBody">
-            修改请求体
-          </a-select-option>
-          <a-select-option value="delay">
-            延时请求
-          </a-select-option>
-          <a-select-option value="block">
-            阻止请求
-          </a-select-option>
-          <a-select-option value="redirect">
-            重定向
-          </a-select-option>
-          <a-select-option value="modifyRequestHeaders">
-            修改请求头
-          </a-select-option>
-          <a-select-option value="modifyResponseHeaders">
-            修改响应头
-          </a-select-option>
-        </a-select>
-      </a-form-item>
+      <section class="form-section">
+        <div class="form-section__title">
+          拦截动作
+        </div>
+        <div class="form-section__body">
+          <a-form-item label="动作类型" name="actionType">
+            <a-select v-model:value="formState.actionType">
+              <a-select-option value="modifyResponseBody">
+                修改响应体
+              </a-select-option>
+              <a-select-option value="modifyRequestBody">
+                修改请求体
+              </a-select-option>
+              <a-select-option value="delay">
+                延时请求
+              </a-select-option>
+              <a-select-option value="block">
+                阻止请求
+              </a-select-option>
+              <a-select-option value="redirect">
+                重定向
+              </a-select-option>
+              <a-select-option value="modifyRequestHeaders">
+                修改请求头
+              </a-select-option>
+              <a-select-option value="modifyResponseHeaders">
+                修改响应头
+              </a-select-option>
+            </a-select>
+          </a-form-item>
 
-      <a-form-item v-if="formState.actionType === 'delay'" label="延时(ms)">
-        <a-input-number
-          v-model:value="formState.delayMs"
-          :min="0"
-          :step="100"
-          style="width: 100%"
-        />
-      </a-form-item>
+          <a-form-item v-if="formState.actionType === 'delay'" label="延时(ms)">
+            <a-input-number
+              v-model:value="formState.delayMs"
+              :min="0"
+              :step="100"
+              style="width: 100%"
+            />
+          </a-form-item>
 
-      <a-form-item v-if="formState.actionType === 'redirect'" label="重定向 URL">
-        <a-input
-          v-model:value="formState.redirectUrl"
-          placeholder="https://example.com/new-path"
-        />
-      </a-form-item>
-      <template
-        v-if="formState.actionType === 'modifyRequestHeaders' || formState.actionType === 'modifyResponseHeaders'"
-      >
-        <a-form-item :label="formState.actionType === 'modifyRequestHeaders' ? '请求头' : '响应头'">
-          <div class="flex flex-col gap-12">
-            <div
-              v-for="(header, index) in formState.headers"
-              :key="index"
-              class="flex gap-8 items-center"
-            >
-              <a-input
-                v-model:value="header.name"
-                placeholder="Header 名称"
-                style="flex: 1"
-              />
-              <a-input
-                v-model:value="header.value"
-                placeholder="Header 值"
-                style="flex: 1"
-              />
-              <a-select
-                v-model:value="header.operation"
-                style="width: 80px"
-              >
-                <a-select-option value="set">
-                  设置
-                </a-select-option>
-                <a-select-option value="append">
-                  追加
-                </a-select-option>
-                <a-select-option value="remove">
-                  删除
-                </a-select-option>
-              </a-select>
-              <a-button
-                type="text"
-                size="small"
-                danger
-                class="flex items-center"
-                @click="removeHeader(index)"
-              >
-                <DeleteOutlined />
-              </a-button>
-            </div>
-            <a-button type="dashed" style="width: 100%" @click="addHeader">
-              <PlusOutlined />添加 Header
-            </a-button>
-          </div>
-          <template #extra>
-            <div class="flex  mt-8 gap-8  ">
-              <div>操作说明:</div>
-              <div class="flex flex-col">
-                <div>设置 = 覆盖该 header</div>
-                <div>追加 = 在现有值后追加</div>
-                <div>删除 = 移除该 header</div>
+          <a-form-item v-if="formState.actionType === 'redirect'" label="重定向 URL">
+            <a-input
+              v-model:value="formState.redirectUrl"
+              placeholder="https://example.com/new-path"
+            />
+          </a-form-item>
+          <template
+            v-if="formState.actionType === 'modifyRequestHeaders' || formState.actionType === 'modifyResponseHeaders'"
+          >
+            <a-form-item :label="formState.actionType === 'modifyRequestHeaders' ? '请求头' : '响应头'">
+              <div class="flex flex-col gap-12">
+                <div
+                  v-for="(header, index) in formState.headers"
+                  :key="index"
+                  class="header-row"
+                >
+                  <a-input
+                    v-model:value="header.name"
+                    placeholder="Header 名称"
+                    style="flex: 1"
+                  />
+                  <a-input
+                    v-model:value="header.value"
+                    placeholder="Header 值"
+                    style="flex: 1"
+                  />
+                  <a-select
+                    v-model:value="header.operation"
+                    style="width: 80px"
+                  >
+                    <a-select-option value="set">
+                      设置
+                    </a-select-option>
+                    <a-select-option value="append">
+                      追加
+                    </a-select-option>
+                    <a-select-option value="remove">
+                      删除
+                    </a-select-option>
+                  </a-select>
+                  <a-button
+                    type="text"
+                    size="small"
+                    danger
+                    class="flex items-center"
+                    @click="removeHeader(index)"
+                  >
+                    <DeleteOutlined />
+                  </a-button>
+                </div>
+                <a-button type="dashed" style="width: 100%" @click="addHeader">
+                  <PlusOutlined />添加 Header
+                </a-button>
               </div>
-            </div>
+              <template #extra>
+                <div class="form-tip">
+                  设置 = 覆盖该 header；追加 = 在现有值后追加；删除 = 移除该 header
+                </div>
+              </template>
+            </a-form-item>
           </template>
-        </a-form-item>
-      </template>
 
-      <template v-if="formState.actionType === 'modifyRequestBody'">
-        <a-form-item label="请求体内容">
-          <JsonEditor v-model="formState.requestBody" />
-          <template #extra>
-            <div style="margin-top: 8px; font-size: 12px; color: #999">
-              留空则保持原请求体
-            </div>
+          <template v-if="formState.actionType === 'modifyRequestBody'">
+            <a-form-item label="请求体内容">
+              <JsonEditor v-model="formState.requestBody" />
+              <template #extra>
+                <div class="form-tip">
+                  留空则保持原请求体
+                </div>
+              </template>
+            </a-form-item>
           </template>
-        </a-form-item>
-      </template>
 
-      <template v-if="formState.actionType === 'modifyResponseBody'">
-        <a-form-item label="响应内容">
-          <JsonEditor v-model="formState.responseBody" />
-          <template #extra>
-            <div style="margin-top: 8px; font-size: 12px; color: #999">
-              留空则保持原响应体
-            </div>
+          <template v-if="formState.actionType === 'modifyResponseBody'">
+            <a-form-item label="状态码">
+              <a-input-number
+                v-model:value="formState.responseStatus"
+                :min="100"
+                :max="599"
+                placeholder="留空则保持原状态码"
+                style="width: 100%"
+              />
+            </a-form-item>
+            <a-form-item label="响应内容">
+              <JsonEditor v-model="formState.responseBody" />
+              <template #extra>
+                <div class="form-tip">
+                  留空则保持原响应体
+                </div>
+              </template>
+            </a-form-item>
           </template>
-        </a-form-item>
-        <a-form-item label="状态码">
-          <a-input-number
-            v-model:value="formState.responseStatus"
-            :min="100"
-            :max="599"
-            placeholder="留空则保持原状态码"
-            style="width: 100%"
-          />
-        </a-form-item>
-      </template>
+        </div>
+      </section>
 
-      <a-form-item>
-        <template #label>
-          <div class="text-[#faad14]">
-            温馨提示
-          </div>
-        </template>
-        <div class="h-[32px] flex items-center text-[#faad14]">
+      <div class="form-notice">
+        <div class="form-notice__title">
+          温馨提示
+        </div>
+        <div class="form-notice__desc">
           某些动作类型触发后是无法在 network 面板实时看到变化的
         </div>
-      </a-form-item>
+      </div>
     </a-form>
 
     <template #footer>
-      <div class="flex items-center justify-end gap-12 py-8">
+      <div class="drawer-footer">
         <a-button @click="handleCancel">
           取消
         </a-button>
@@ -402,3 +424,86 @@ function removeHeader(index: number) {
     </template>
   </a-drawer>
 </template>
+
+<style scoped>
+.drawer-title__main {
+  font-size: 16px;
+  font-weight: 600;
+  color: #262626;
+}
+
+.drawer-title__sub {
+  margin-top: 4px;
+  font-size: 12px;
+  font-weight: 400;
+  color: #8c8c8c;
+}
+
+.rule-form {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.form-section {
+  overflow: hidden;
+  border: 1px solid #f0f0f0;
+  border-radius: var(--ri-radius-lg);
+  background: #fff;
+}
+
+.form-section__title {
+  padding: 12px 16px;
+  border-bottom: 1px solid #f5f5f5;
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--ri-primary-darker);
+  background: var(--ri-primary-bg);
+}
+
+.form-section__body {
+  padding: 16px 16px 4px;
+}
+
+.header-row {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+  padding: 10px;
+  border: 1px dashed #f0f0f0;
+  border-radius: var(--ri-radius-md);
+  background: #fafafa;
+}
+
+.form-tip {
+  margin-top: 8px;
+  font-size: 12px;
+  color: #8c8c8c;
+}
+
+.form-notice {
+  padding: 14px 16px;
+  border: 1px solid #ffe58f;
+  border-radius: var(--ri-radius-lg);
+  background: #fffbe6;
+}
+
+.form-notice__title {
+  font-size: 13px;
+  font-weight: 600;
+  color: #d48806;
+}
+
+.form-notice__desc {
+  margin-top: 4px;
+  font-size: 13px;
+  color: #ad6800;
+}
+
+.drawer-footer {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 12px;
+}
+</style>
