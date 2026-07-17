@@ -16,6 +16,60 @@ function findHit(url: string) {
   return activeRules.find(r => r.enabled && matchUrl(r.condition.urlPattern, r.condition.isRegex, url))
 }
 
+/** 去除 JSON 中的注释不受影响 */
+function stripJsonComments(input: string): string {
+  let result = ''
+  let inString = false
+  let inSingleLineComment = false
+  let inMultiLineComment = false
+  for (let i = 0; i < input.length; i++) {
+    const c = input[i]
+    const next = input[i + 1]
+    if (inSingleLineComment) {
+      if (c === '\n') {
+        inSingleLineComment = false
+        result += c
+      }
+      continue
+    }
+    if (inMultiLineComment) {
+      if (c === '*' && next === '/') {
+        inMultiLineComment = false
+        i++
+      }
+      continue
+    }
+    if (inString) {
+      result += c
+      if (c === '\\') {
+        result += next
+        i++
+        continue
+      }
+      if (c === '"')
+        inString = false
+      continue
+    }
+    if (c === '"') {
+      inString = true
+      result += c
+      continue
+    }
+    if (c === '/' && next === '/') {
+      inSingleLineComment = true
+      i++
+      continue
+    }
+    if (c === '/' && next === '*') {
+      inMultiLineComment = true
+      i++
+      continue
+    }
+    result += c
+  }
+  return result
+}
+
 // ---- 劫持 fetch ----
 const originalFetch = window.fetch
 window.fetch = async function (input: RequestInfo | URL, init?: RequestInit) {
@@ -99,11 +153,21 @@ class PatchedXHR extends OriginalXHR {
       this.addEventListener('readystatechange', () => {
         if (this.readyState === 4) {
           if (patchedBody !== undefined) {
-            const responseValue = this.responseType === 'json'
-              ? JSON.parse(patchedBody)
-              : patchedBody
-            Object.defineProperty(this, 'responseText', { value: patchedBody, configurable: true })
-            Object.defineProperty(this, 'response', { value: responseValue, configurable: true })
+            const strippedBody = stripJsonComments(patchedBody)
+            Object.defineProperty(this, 'responseText', { value: strippedBody, configurable: true })
+
+            if (this.responseType === 'json') {
+              try {
+                const responseValue = JSON.parse(strippedBody)
+                Object.defineProperty(this, 'response', { value: responseValue, configurable: true })
+              }
+              catch (err) {
+                console.error('[ReqProxy] ❌ modifyResponseBody JSON.parse 失败:', err, strippedBody)
+              }
+            }
+            else {
+              Object.defineProperty(this, 'response', { value: strippedBody, configurable: true })
+            }
           }
           if (patchedStatus !== undefined) {
             Object.defineProperty(this, 'status', { value: patchedStatus, configurable: true })
