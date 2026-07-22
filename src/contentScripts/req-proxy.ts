@@ -78,12 +78,11 @@ window.fetch = async function (input: RequestInfo | URL, init?: RequestInit) {
   const action = hit?.action
 
   if (hit) {
-    // eslint-disable-next-line no-console
-    console.log('[ReqProxy] 🎯 拦截到 fetch 请求:', {
+    window.postMessage({
+      __type: 'RR_RULE_HIT',
+      ruleId: hit.id,
       url,
-      ruleName: hit.name,
-      actionType: action?.type,
-    })
+    }, '*')
   }
 
   if (action?.type === 'delay') {
@@ -129,12 +128,11 @@ class PatchedXHR extends OriginalXHR {
     const action = hit?.action
 
     if (hit) {
-      // eslint-disable-next-line no-console
-      console.log('[ReqProxy] 🎯 拦截到 XHR 请求:', {
+      window.postMessage({
+        __type: 'RR_RULE_HIT',
+        ruleId: hit.id,
         url: this.__url,
-        ruleName: hit.name,
-        actionType: action?.type,
-      })
+      }, '*')
     }
 
     if (action?.type === 'delay') {

@@ -1,9 +1,9 @@
 import { computed } from 'vue'
 import { useWebExtensionStorage } from '~/composables/useWebExtensionStorage'
-import type { Rule } from '~/shared/rule'
+import type { Rule, RuleHitStatus } from '~/shared/rule'
 import type { GlobalConfig } from '~/shared/type'
 
-export type { Rule, RuleCondition, RuleAction } from '~/shared/rule'
+export type { Rule, RuleCondition, RuleAction, RuleHitStatus } from '~/shared/rule'
 
 /**
  * 生成新的规则 ID
@@ -34,6 +34,11 @@ export const { data: rules, dataReady: rulesReady } = useWebExtensionStorage<Rul
       },
     },
   ],
+)
+
+export const { data: ruleHitStatus } = useWebExtensionStorage<Record<number, RuleHitStatus>>(
+  'ruleHitStatus',
+  {},
 )
 
 /** 展示用：已启用规则排在前面，同组内保持原有顺序 */

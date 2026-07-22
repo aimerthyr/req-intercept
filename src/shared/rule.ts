@@ -19,12 +19,24 @@ export type RuleAction =
   | { type: 'modifyRequestBody', body?: string } // 需主世界拦截
   | { type: 'delay', delayMs: number } // 需主世界拦截
 
+/** 规则运行时命中状态 */
+export interface RuleHitStatus {
+  /** 最近一次命中时间戳 */
+  lastHitAt: number
+  /** 最近一次命中的 URL */
+  lastHitUrl?: string
+  /** 累计命中次数 */
+  hitCount: number
+}
+
 export interface Rule {
   id: number
   name: string
   enabled: boolean
   condition: RuleCondition
   action: RuleAction
+  /** 运行时命中状态，由 ruleHitStatus 存储合并而来 */
+  hitStatus?: RuleHitStatus
 }
 
 /** 需 MAIN 世界 req-proxy 处理的 action 子集 */

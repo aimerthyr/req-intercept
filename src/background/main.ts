@@ -2,6 +2,7 @@ import { onMessage, sendMessage } from 'webext-bridge/background'
 import { syncActionIcon } from './actionIcon'
 import { type Rule, getGlobalConfig, getRules, isPageHookRule, needsPageHook } from './rule'
 import { syncDnrRules } from './dnrCompiler'
+import { recordRuleHit } from '~/logic/rule-hit'
 
 /**
  *  background 中 无法使用 window doucemnt DOM 之类的 API 因为它是跑在  Service Worker 里的，它和页面是两个 js 环境
@@ -75,8 +76,9 @@ chrome.storage.onChanged.addListener((changes, area) => {
 
 // 调试 DNR 规则匹配
 chrome.declarativeNetRequest.onRuleMatchedDebug.addListener((info) => {
-  // eslint-disable-next-line no-console
-  console.log('[DNR matched]', info)
+  recordRuleHit(info.rule.ruleId, info.request.url).catch((err) => {
+    console.error('[Background] 记录规则命中失败:', err)
+  })
 })
 
 // 初始化时编译一次

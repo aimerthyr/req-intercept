@@ -2,7 +2,7 @@
 import { EditFilled, RightOutlined, SettingFilled, UnorderedListOutlined } from '@ant-design/icons-vue'
 import type { VTableColumn } from '@aimerthyr/virtual-table'
 import { VTable } from '@aimerthyr/virtual-table'
-import { globalConfig, rules, sortedRules } from '~/logic/storage'
+import { globalConfig, ruleHitStatus, rules, sortedRules } from '~/logic/storage'
 import type { Rule } from '~/logic/storage'
 import { getActionLabel, openOptionsPage } from '~/logic'
 
@@ -18,7 +18,7 @@ const tableMaxHeight = computed(() => {
 
 const columns: VTableColumn[] = [
   { columnHeader: '状态', columnKey: 'enabled', columnWidth: 60 },
-  { columnHeader: '规则名称', columnKey: 'name', columnWidth: 160 },
+  { columnHeader: '规则名称', columnKey: 'name', columnWidth: 180 },
   { columnHeader: 'URL 模式', columnKey: 'pattern' },
   { columnHeader: '动作', columnKey: 'action', columnWidth: 120 },
   { columnHeader: '操作', columnKey: 'edit', columnWidth: 56, columnAlign: 'center' },
@@ -90,11 +90,14 @@ const columns: VTableColumn[] = [
                 <a-switch v-model:checked="row.enabled" size="small" />
               </template>
               <template v-else-if="column.columnKey === 'name'">
-                <a-tooltip :title="row.name">
-                  <a-tag class="rule-name-tag" :color="row.enabled ? 'purple' : 'default'">
-                    {{ row.name }}
-                  </a-tag>
-                </a-tooltip>
+                <div class="rule-name-cell">
+                  <a-tooltip :title="row.name">
+                    <a-tag class="rule-name-tag" :color="row.enabled ? 'purple' : 'default'">
+                      {{ row.name }}
+                    </a-tag>
+                  </a-tooltip>
+                  <RuleHitBadge :status="ruleHitStatus[row.id]" :enabled="row.enabled" />
+                </div>
               </template>
               <template v-else-if="column.columnKey === 'pattern'">
                 <a-tooltip :title="(row.condition.isRegex ? '正则: ' : '通配: ') + row.condition.urlPattern">
@@ -265,6 +268,12 @@ const columns: VTableColumn[] = [
 
 .rules-table {
   overflow: hidden;
+}
+
+.rule-name-cell {
+  display: flex;
+  align-items: center;
+  min-width: 0;
 }
 
 .rule-name-tag {

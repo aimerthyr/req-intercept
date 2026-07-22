@@ -1,5 +1,6 @@
 /* eslint-disable no-console */
 import { onMessage, sendMessage } from 'webext-bridge/content-script'
+import { recordRuleHit } from '~/logic/rule-hit'
 
 // Firefox `browser.tabs.executeScript()` requires scripts return a primitive value
 (() => {
@@ -21,9 +22,20 @@ import { onMessage, sendMessage } from 'webext-bridge/content-script'
   pushRulesToPage()
 
   window.addEventListener('message', (e) => {
-    if (e.source !== window || e.data?.__type !== 'RR_REQUEST_RULES')
+    if (e.source !== window)
       return
-    pushRulesToPage()
+    if (e.data?.__type === 'RR_REQUEST_RULES') {
+      pushRulesToPage()
+      return
+    }
+    if (e.data?.__type === 'RR_RULE_HIT') {
+      const { ruleId, url } = e.data
+      if (typeof ruleId === 'number' && typeof url === 'string') {
+        recordRuleHit(ruleId, url).catch((err) => {
+          console.error('[ContentScript] 记录规则命中失败:', err)
+        })
+      }
+    }
   })
 
   // 监听来自 background 的规则更新

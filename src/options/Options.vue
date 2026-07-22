@@ -14,7 +14,7 @@ import type { VTableColumn } from '@aimerthyr/virtual-table'
 import { VTable } from '@aimerthyr/virtual-table'
 import RuleDrawer from './RuleDrawer.vue'
 import RulesBackup from './RulesBackup.vue'
-import { generateRuleId, rules, rulesReady, sortedRules } from '~/logic/storage'
+import { generateRuleId, ruleHitStatus, rules, rulesReady, sortedRules } from '~/logic/storage'
 import type { Rule } from '~/logic/storage'
 import { clearEditRuleIdFromUrl, getActionLabel, parseEditRuleIdFromUrl } from '~/logic'
 
@@ -46,7 +46,7 @@ function openEditDrawer(rule: Rule) {
 
 const columns: VTableColumn[] = [
   { columnHeader: '状态', columnKey: 'enabled', columnWidth: 80, columnAlign: 'center' },
-  { columnHeader: '规则名称', columnKey: 'name', columnWidth: 180 },
+  { columnHeader: '规则名称', columnKey: 'name', columnWidth: 200 },
   { columnHeader: 'URL 匹配模式', columnKey: 'pattern' },
   { columnHeader: '动作', columnKey: 'action', columnWidth: 200 },
   { columnHeader: '操作', columnKey: 'action-btn', columnWidth: 220, columnAlign: 'center' },
@@ -58,6 +58,8 @@ function toggleRule(event: boolean) {
 
 function deleteRule(record: Rule) {
   rules.value = rules.value.filter(r => r.id !== record.id)
+  const { [record.id]: _, ...rest } = ruleHitStatus.value
+  ruleHitStatus.value = rest
   message.success('规则删除成功')
 }
 
@@ -74,6 +76,7 @@ function copyRule(record: Rule) {
 
 function deleteAll() {
   rules.value = []
+  ruleHitStatus.value = {}
   searchKeyword.value = ''
   message.success('已删除所有规则')
 }
@@ -264,12 +267,13 @@ onMounted(async () => {
                   <a-switch v-model:checked="row.enabled" @change="toggleRule($event as boolean)" />
                 </template>
                 <template v-else-if="column.columnKey === 'name'">
-                  <div class="flex items-center">
+                  <div class="rule-name-cell">
                     <a-tooltip :title="row.name">
                       <a-tag class="rule-name-tag" :color="row.enabled ? 'purple' : 'default'">
                         {{ row.name }}
                       </a-tag>
                     </a-tooltip>
+                    <RuleHitBadge :status="ruleHitStatus[row.id]" :enabled="row.enabled" />
                   </div>
                 </template>
                 <template v-else-if="column.columnKey === 'pattern'">
@@ -550,6 +554,12 @@ onMounted(async () => {
 .rules-table {
   flex: 1;
   min-height: 0;
+}
+
+.rule-name-cell {
+  display: flex;
+  align-items: center;
+  min-width: 0;
 }
 
 .rule-name-tag {
